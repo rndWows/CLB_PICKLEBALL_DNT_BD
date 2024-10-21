@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giấy Chứng Nhận</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #fff;
+            margin: 0;
+            font-family: 'Roboto', serif;
+        }
+
+        .certificate {
+            width: 900px;
+            height: 630px;
+            position: relative;
+            background: url('Thiết kế chưa có tênnen.png');
+            background-size: cover;
+            text-align: center;
+        }
+
+        .certificate h1,
+        .certificate h2 {
+            font-size: 2em;
+            color: #3e4095;
+            margin: 2px;
+        }
+
+        .certificate .chungnhan {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: #ed3237;
+        }
+
+        .certificate p {
+            font-size: 1.2em;
+            margin: 2px 0;
+            color: #3e4095;
+            text-align: left;
+            margin-left: 100px;
+        }
+
+        .recipient-name {
+            font-weight: bold;
+            font-size: 1em;
+            margin: 20px 0;
+            color: #3e4095;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 30px;
+        }
+
+        .date {
+            width: 38%;
+
+        }
+
+        .date p {
+            font-size: 0.6em;
+            text-align: center;
+        }
+
+        .signature {
+            width: 65%;
+            font-size: 0.6em;
+            text-align: right;
+            margin-right: 40px;
+        }
+
+        .signature p {
+            margin: 5px 0;
+            text-align: center;
+        }
+
+        .signature-name {
+            margin-top: 30px;
+            font-weight: bold;
+        }
+
+        .logo {
+            width: 12%;
+            margin-top: 70px;
+        }
+
+        .logodau {
+            width: 25%;
+        }
+
+        .logochuki {
+            width: 35%;
+            margin-left: -50px;
+        }
+
+        .chungnhanlogo {
+            text-align: right;
+        }
+
+        .logochungnhan {
+            width: 35%;
+        }
+
+        #capture-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        .horizontal-line {
+            width: 30%;
+            height: 3px; /* Adjust the height to match your line thickness */
+            background: linear-gradient(to right, rgba(255, 255, 255, 0), rgb(205 176 106), rgba(255, 255, 255, 0));
+            margin: 15px auto;
+            
+        }
+    </style>
+</head>
+
+<body>
+    <div class="certificate" id="certificate">
+        <img src="https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/logo.png" alt="Logo" class="logo">
+        <h1>CLB PICKLEBALL DOANH NHÂN TRẺ BÌNH DƯƠNG</h1>
+        <h1 class="chungnhan">CHỨNG NHẬN</h1>
+        <p>Hội viên: <span class="recipient-name" id="name"></span></p>
+        <p>Đơn vị: <span class="recipient-name" id="cty"></span></p>
+        <br>
+        <div class="horizontal-line"></div>
+        <p><span class="recipient-name">Là hội viên của Hội Doanh Nhân Thái Bình Miền Nam</span></p>
+        <div class="footer">
+            <div class="date">
+                <p>NGÀY THAM GIA</p>
+                <p id="ngay"></p>
+            </div>
+            <div class="chungnhanlogo">
+                <img src="chungnhan.png" alt="Logo" class="logochungnhan">
+            </div>
+            <div class="signature">
+                <p>CLB PICKLEBALL DOANH NHÂN TRẺ BÌNH DƯƠNG</p>
+                <p>CHỦ TỊCH</p>
+                <center>
+                    <img src="" alt="Logo"
+                        class="logodau">
+                    <img src="" alt="Logo" class="logochuki">
+                </center>
+                <p class="signature-name">CLB PKB đã ký</p>
+            </div>
+        </div>
+    </div>
+    <button id="capture-btn">Chụp trang này</button>
+    <script>
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Get parameters from URL
+        var name = getUrlParameter('name');
+        document.getElementById('name').textContent = name;
+        var cty = getUrlParameter('cty');
+        document.getElementById('cty').textContent = cty;
+        var ngay = getUrlParameter('ngay');
+        document.getElementById('ngay').textContent = ngay;
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        document.getElementById('capture-btn').addEventListener('click', function () {
+            html2canvas(document.getElementById('certificate')).then(function (canvas) {
+                // Create an <a> element for downloading the image
+                let link = document.createElement('a');
+                link.download = name+ ' chungnhan.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        });
+    </script>
+</body>
+
+</html>
