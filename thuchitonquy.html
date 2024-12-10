@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Thu Chi Tồn Quỹ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.45.1/apexcharts.min.js"></script>
+    <style>
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading.hidden {
+            display: none;
+        }
+
+        .filter-drawer {
+            transition: transform 0.3s ease-in-out;
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 50;
+            overflow-y: auto;
+        }
+
+        @media (min-width: 768px) {
+            .filter-drawer {
+                width: 400px;
+                right: -400px;
+            }
+        }
+
+        .filter-drawer.open {
+            transform: translateX(-100%);
+        }
+
+        .filter-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+            z-index: 40;
+        }
+
+        .filter-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: #f3f4f6;
+            border-radius: 9999px;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            background: #e5e7eb;
+        }
+
+        .filter-chip.active {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .date-input {
+            position: relative;
+        }
+
+        .date-input input {
+            padding-right: 2.5rem;
+        }
+
+        .date-input::after {
+            content: "📅";
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #94a3b8 #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #94a3b8;
+            border-radius: 20px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #94a3b8 #f1f5f9;
+        }
+
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background-color: #94a3b8;
+            border-radius: 20px;
+            border: 2px solid #f1f5f9;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50">
+    <!-- Loading Indicator -->
+    <div id="loading" class="loading hidden">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div class="mt-4 text-lg font-medium text-blue-600">Đang tải dữ liệu...</div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header area with filter button -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Quản Lý Thu Chi Tồn Quỹ</h1>
+            <button id="openFilters"
+                class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                    </path>
+                </svg>
+                Bộ lọc
+            </button>
+        </div>
+
+        <!-- Active Filters Display -->
+        <div id="activeFilters" class="mb-6 flex flex-wrap gap-2">
+            <!-- Active filters will be inserted here -->
+        </div>
+
+        <!-- Filter Backdrop -->
+        <div id="filterBackdrop" class="filter-backdrop"></div>
+
+        <!-- Filter Drawer -->
+        <div id="filterDrawer" class="filter-drawer">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900">Bộ lọc</h2>
+                    <button id="closeFilters" class="text-gray-400 hover:text-gray-500">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Thời gian -->
+                    <div class="space-y-4">
+                        <label class="block text-sm font-medium text-gray-700">Thời gian</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="date-input">
+                                <input type="date" data-filter="startDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div class="date-input">
+                                <input type="date" data-filter="endDate"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="quick-date filter-chip" data-days="7">7 ngày</button>
+                            <button class="quick-date filter-chip" data-days="30">30 ngày</button>
+                            <button class="quick-date filter-chip" data-period="month">Tháng này</button>
+                            <button class="quick-date filter-chip" data-period="year">Năm này</button>
+                        </div>
+                    </div>
+
+                    <!-- Các bộ lọc khác -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Phân loại</label>
+                            <select data-filter="category"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nhóm</label>
+                            <select data-filter="group"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Người chi</label>
+                            <select data-filter="payer"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nguồn chi</label>
+                            <select data-filter="paymentSource"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Người nhận</label>
+                            <select data-filter="receiver"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nguồn nhận</label>
+                            <select data-filter="receiveSource"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Tất cả</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 space-y-4">
+                    <button id="applyFilters"
+                        class="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                        Áp dụng bộ lọc
+                    </button>
+                    <button id="resetFilters"
+                        class="w-full px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                        Đặt lại bộ lọc
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards tổng quan -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-colors">
+                <h2 class="text-sm font-medium text-slate-600">Tổng Thu</h2>
+                <p class="text-2xl font-semibold text-green-600 mt-2" data-stat="income">0 ₫</p>
+            </div>
+            <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-colors">
+                <h2 class="text-sm font-medium text-slate-600">Tổng Chi</h2>
+                <p class="text-2xl font-semibold text-red-600 mt-2" data-stat="expense">0 ₫</p>
+            </div>
+            <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-colors">
+                <h2 class="text-sm font-medium text-slate-600">Tồn Quỹ</h2>
+                <p class="text-2xl font-semibold text-blue-600 mt-2" data-stat="balance">0 ₫</p>
+            </div>
+            <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 transition-colors">
+                <h2 class="text-sm font-medium text-slate-600">Số Giao Dịch</h2>
+                <p class="text-2xl font-semibold text-purple-600 mt-2" data-stat="transactions">0</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <h2 class="text-lg font-medium text-slate-800 mb-4">Thống kê Thu Chi Tồn Quỹ</h2>
+            <div id="weeklyChart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <!-- Bảng chi tiết -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                <h2 class="text-lg font-medium text-slate-800">Chi tiết thu chi tồn quỹ</h2>
+                <button id="exportExcel"
+                    class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                    Xuất Excel
+                </button>
+            </div>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Phân loại</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Nhóm</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Ngày CT</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Số CT</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Số tiền</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Diễn giải</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Người chi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Người nộp</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Công ty</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Nguồn chi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Người nhận</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Nguồn nhận</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTableBody" class="divide-y divide-slate-200">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            appId: 'd9ee17ac-4397-452d-9e74-97997607fa4b',
+            accessKey: 'V2-Rovhm-ZiLxx-msd7k-TSoig-NkECL-5LXEq-Kraws-yE09V',
+            region: 'www'
+        };
+
+        // State management
+        let currentData = [];
+        let filteredData = [];
+        let uniqueValues = {
+            categories: new Set(),
+            groups: new Set(),
+            payers: new Set(),
+            paymentSources: new Set(),
+            receivers: new Set(),
+            receiveSources: new Set()
+        };
+
+        // Loading indicator
+        function toggleLoading(show) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+        }
+
+        // Filter drawer management
+        function toggleFilterDrawer(show) {
+            const filterDrawer = document.getElementById('filterDrawer');
+            const filterBackdrop = document.getElementById('filterBackdrop');
+            filterDrawer.classList.toggle('open', show);
+            filterBackdrop.classList.toggle('show', show);
+            document.body.style.overflow = show ? 'hidden' : '';
+        }
+
+        // Fetch data from API
+        async function fetchData() {
+            toggleLoading(true);
+            const tableName = encodeURIComponent("THU CHI TON QUY");
+
+            try {
+                const response = await fetch(
+                    `https://api.appsheet.com/api/v2/apps/${config.appId}/tables/${tableName}/Action`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'ApplicationAccessKey': config.accessKey,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            Action: 'Find',
+                            Properties: {},
+                            Selector: ''
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentData = data;
+                filteredData = [...currentData];
+
+                populateFilters();
+                updateDashboard();
+                updateTable();
+            } catch (error) {
+                console.error('Failed to fetch data:', error);
+                alert('Lỗi khi tải dữ liệu: ' + error.message);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Populate filter options
+        function populateFilters() {
+            // Reset unique values
+            Object.keys(uniqueValues).forEach(key => uniqueValues[key].clear());
+
+            // Collect unique values from data
+            currentData.forEach(item => {
+                if (item['Phân loại']) uniqueValues.categories.add(item['Phân loại']);
+                if (item['Nhóm thu chi']) uniqueValues.groups.add(item['Nhóm thu chi']);
+                if (item['Người chi']) uniqueValues.payers.add(item['Người chi']);
+                if (item['Nguồn chi (TM/ Số TK)']) uniqueValues.paymentSources.add(item['Nguồn chi (TM/ Số TK)']);
+                if (item['Người nhận']) uniqueValues.receivers.add(item['Người nhận']);
+                if (item['Nguồn nhận (TM/ Số TK)']) uniqueValues.receiveSources.add(item['Nguồn nhận (TM/ Số TK)']);
+            });
+
+            // Update select elements
+            updateSelect('category', uniqueValues.categories);
+            updateSelect('group', uniqueValues.groups);
+            updateSelect('payer', uniqueValues.payers);
+            updateSelect('paymentSource', uniqueValues.paymentSources);
+            updateSelect('receiver', uniqueValues.receivers);
+            updateSelect('receiveSource', uniqueValues.receiveSources);
+        }
+
+        // Update select element options
+        function updateSelect(filterName, values) {
+            const select = document.querySelector(`[data-filter="${filterName}"]`);
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Tất cả</option>' +
+                Array.from(values)
+                    .filter(Boolean)
+                    .sort((a, b) => a.localeCompare(b, 'vi'))
+                    .map(value => `<option value="${value}">${value}</option>`)
+                    .join('');
+            select.value = currentValue;
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const filters = {
+                startDate: document.querySelector('[data-filter="startDate"]').value,
+                endDate: document.querySelector('[data-filter="endDate"]').value,
+                category: document.querySelector('[data-filter="category"]').value,
+                group: document.querySelector('[data-filter="group"]').value,
+                payer: document.querySelector('[data-filter="payer"]').value,
+                paymentSource: document.querySelector('[data-filter="paymentSource"]').value,
+                receiver: document.querySelector('[data-filter="receiver"]').value,
+                receiveSource: document.querySelector('[data-filter="receiveSource"]').value
+            };
+
+            filteredData = currentData.filter(item => {
+                const itemDate = new Date(item['Ngày chứng từ']);
+
+                if (filters.startDate) {
+                    const startDate = new Date(filters.startDate);
+                    startDate.setHours(0, 0, 0, 0);
+                    if (itemDate < startDate) return false;
+                }
+
+                if (filters.endDate) {
+                    const endDate = new Date(filters.endDate);
+                    endDate.setHours(23, 59, 59, 999);
+                    if (itemDate > endDate) return false;
+                }
+
+                if (filters.category && item['Phân loại'] !== filters.category) return false;
+                if (filters.group && item['Nhóm thu chi'] !== filters.group) return false;
+                if (filters.payer && item['Người chi'] !== filters.payer) return false;
+                if (filters.paymentSource && item['Nguồn chi (TM/ Số TK)'] !== filters.paymentSource) return false;
+                if (filters.receiver && item['Người nhận'] !== filters.receiver) return false;
+                if (filters.receiveSource && item['Nguồn nhận (TM/ Số TK)'] !== filters.receiveSource) return false;
+
+                return true;
+            });
+
+            updateActiveFilters();
+            updateDashboard();
+            updateTable();
+            toggleFilterDrawer(false);
+        }
+
+        // Update active filters display
+        function updateActiveFilters() {
+            const activeFiltersContainer = document.getElementById('activeFilters');
+            activeFiltersContainer.innerHTML = '';
+
+            const filters = {
+                'Phân loại': document.querySelector('[data-filter="category"]').value,
+                'Nhóm': document.querySelector('[data-filter="group"]').value,
+                'Người chi': document.querySelector('[data-filter="payer"]').value,
+                'Nguồn chi': document.querySelector('[data-filter="paymentSource"]').value,
+                'Người nhận': document.querySelector('[data-filter="receiver"]').value,
+                'Nguồn nhận': document.querySelector('[data-filter="receiveSource"]').value
+            };
+
+            for (const [key, value] of Object.entries(filters)) {
+                if (value) {
+                    const chip = document.createElement('div');
+                    chip.className = 'filter-chip active';
+                    chip.innerHTML = `
+                        ${key}: ${value}
+                        <button class="ml-2 text-gray-500 hover:text-gray-700" data-remove="${key.toLowerCase()}">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    `;
+                    activeFiltersContainer.appendChild(chip);
+                }
+            }
+
+            // Add event listeners for remove buttons
+            document.querySelectorAll('[data-remove]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const filterKey = e.currentTarget.dataset.remove;
+                    const filterMap = {
+                        'phân loại': 'category',
+                        'nhóm': 'group',
+                        'người chi': 'payer',
+                        'nguồn chi': 'paymentSource',
+                        'người nhận': 'receiver',
+                        'nguồn nhận': 'receiveSource'
+                    };
+
+                    document.querySelector(`[data-filter="${filterMap[filterKey]}"]`).value = '';
+                    applyFilters();
+                });
+            });
+        }
+
+        // Reset all filters
+        function resetFilters() {
+            // Reset tất cả các filter về giá trị mặc định
+            document.querySelectorAll('[data-filter]').forEach(filter => {
+                filter.value = '';
+            });
+
+            document.querySelectorAll('.quick-date').forEach(btn =>
+                btn.classList.remove('active'));
+
+            // Reset date range về mặc định (đầu tháng đến hiện tại)
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            document.querySelector('[data-filter="startDate"]').value =
+                firstDayOfMonth.toISOString().split('T')[0];
+            document.querySelector('[data-filter="endDate"]').value =
+                today.toISOString().split('T')[0];
+
+            // Reset lại data
+            filteredData = [...currentData];
+
+            // Cập nhật UI
+            updateActiveFilters();
+
+            // Log để debug
+            console.log('After Reset - Filtered Data Length:', filteredData.length);
+            console.log('Sample Data:', filteredData.slice(0, 2));
+
+            // Cập nhật dashboard và table
+            updateDashboard();
+            updateTable();
+
+            // Tải lại dữ liệu từ API
+            fetchData();
+        }
+
+        // Thêm hàm này vào phần JavaScript hiện có
+        function updateWeeklyChart() {
+            const weeklyData = {};
+
+            // Xử lý dữ liệu theo tuần
+            filteredData.forEach(item => {
+                const date = new Date(item['Ngày chứng từ']);
+                const weekKey = getWeekKey(date);
+
+                if (!weeklyData[weekKey]) {
+                    weeklyData[weekKey] = {
+                        thu: 0,
+                        chi: 0,
+                        tonQuy: 0
+                    };
+                }
+
+                const amount = parseFloat(String(item['Số tiền']).replace(/[^\d.-]/g, '')) || 0;
+                if (item['Phân loại']?.toLowerCase() === 'thu') {
+                    weeklyData[weekKey].thu += amount;
+                } else if (item['Phân loại']?.toLowerCase() === 'chi') {
+                    weeklyData[weekKey].chi += amount;
+                }
+            });
+
+            // Tính tồn quỹ tích lũy
+            let accumulatedBalance = 0;
+            Object.keys(weeklyData).sort().forEach(week => {
+                accumulatedBalance += weeklyData[week].thu - weeklyData[week].chi;
+                weeklyData[week].tonQuy = accumulatedBalance;
+            });
+
+            // Chuẩn bị dữ liệu cho biểu đồ
+            const weeks = Object.keys(weeklyData).sort().slice(-8); // Lấy 8 tuần gần nhất
+            const thu = weeks.map(week => weeklyData[week].thu);
+            const chi = weeks.map(week => weeklyData[week].chi);
+            const tonQuy = weeks.map(week => weeklyData[week].tonQuy);
+
+            // Cấu hình biểu đồ
+            const options = {
+                series: [
+                    {
+                        name: 'Thu',
+                        type: 'column',
+                        data: thu
+                    },
+                    {
+                        name: 'Chi',
+                        type: 'column',
+                        data: chi
+                    },
+                    {
+                        name: 'Tồn Quỹ',
+                        type: 'line',
+                        data: tonQuy
+                    }
+                ],
+                chart: {
+                    height: 400,
+                    type: 'line',
+                    stacked: false,
+                    toolbar: {
+                        show: true
+                    }
+                },
+                stroke: {
+                    width: [1, 1, 4],
+                    curve: 'smooth'
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '50%'
+                    }
+                },
+                colors: ['#22c55e', '#ef4444', '#3b82f6'],
+                xaxis: {
+                    categories: weeks.map(formatWeekLabel),
+                    labels: {
+                        rotate: -45,
+                        style: {
+                            fontSize: '12px'
+                        }
+                    }
+                },
+                yaxis: [
+                    {
+                        title: {
+                            text: 'Thu/Chi (VNĐ)',
+                            style: {
+                                fontSize: '12px'
+                            }
+                        },
+                        labels: {
+                            formatter: function (value) {
+                                return formatShortMoney(value);
+                            }
+                        }
+                    }
+                ],
+                tooltip: {
+                    y: {
+                        formatter: function (value) {
+                            return formatCurrency(value);
+                        }
+                    }
+                },
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'center'
+                }
+            };
+
+            // Xóa biểu đồ cũ nếu có
+            document.getElementById('weeklyChart').innerHTML = '';
+
+            // Khởi tạo biểu đồ mới
+            const chart = new ApexCharts(document.getElementById('weeklyChart'), options);
+            chart.render();
+        }
+
+        // Thêm các hàm tiện ích
+        function getWeekKey(date) {
+            const firstDayOfWeek = new Date(date.setDate(date.getDate() - date.getDay()));
+            return firstDayOfWeek.toISOString().split('T')[0];
+        }
+
+        function formatWeekLabel(weekKey) {
+            const date = new Date(weekKey);
+            return `Tuần ${getWeekNumber(date)}`;
+        }
+
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+
+        function formatShortMoney(value) {
+            if (Math.abs(value) >= 1000000000) {
+                return (value / 1000000000).toFixed(1) + ' tỷ';
+            } else if (Math.abs(value) >= 1000000) {
+                return (value / 1000000).toFixed(1) + ' tr';
+            }
+            return value.toFixed(0);
+        }
+
+        // Update dashboard statistics
+        function updateDashboard() {
+            const stats = {
+                totalIncome: 0,
+                totalExpense: 0,
+                totalTransactions: filteredData.length
+            };
+
+            filteredData.forEach(item => {
+                const amount = parseFloat(String(item['Số tiền']).replace(/[^\d.-]/g, '')) || 0;
+                const category = String(item['Phân loại'] || '').toLowerCase();
+
+                if (category === 'chi') {
+                    stats.totalExpense += amount;
+                } else if (category === 'thu') {
+                    stats.totalIncome += amount;
+                }
+            });
+
+            stats.balance = stats.totalIncome - stats.totalExpense;
+
+            // Cập nhật UI trực tiếp
+            document.querySelector('[data-stat="income"]').textContent = formatCurrency(stats.totalIncome);
+            document.querySelector('[data-stat="expense"]').textContent = formatCurrency(stats.totalExpense);
+            document.querySelector('[data-stat="balance"]').textContent = formatCurrency(stats.balance);
+            document.querySelector('[data-stat="transactions"]').textContent = stats.totalTransactions;
+
+            updateWeeklyChart();
+        }
+
+        // Animate value changes
+        function animateValue(selector, endValue) {
+            const element = document.querySelector(selector);
+            const startValue = parseFloat(element.textContent.replace(/[^\d.-]/g, '')) || 0;
+            const duration = 1000;
+            const steps = 60;
+            const increment = (endValue - startValue) / steps;
+
+            let currentValue = startValue;
+            const update = setInterval(() => {
+                currentValue += increment;
+                if ((increment > 0 && currentValue >= endValue) ||
+                    (increment < 0 && currentValue <= endValue)) {
+                    clearInterval(update);
+                    currentValue = endValue;
+                }
+                element.textContent = formatCurrency(currentValue);
+            }, duration / steps);
+        }
+
+        // Update transaction table
+        function updateTable() {
+            const tbody = document.getElementById('transactionTableBody');
+
+            const sortedData = [...filteredData].sort((a, b) =>
+                new Date(b['Ngày chứng từ']) - new Date(a['Ngày chứng từ'])
+            );
+
+            tbody.innerHTML = sortedData.map(item => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Phân loại'] || ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Nhóm thu chi'] || ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${formatDate(item['Ngày chứng từ'])}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Số chứng từ'] || ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${item['Phân loại']?.toLowerCase() === 'thu' ? 'text-green-600' : 'text-red-600'}">
+                        ${formatCurrency(item['Số tiền'])}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Diển giải'] || ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Người chi'] || '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Người nộp tiền'] || '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Tên công ty'] || ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Nguồn chi (TM/ Số TK)'] || '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Người nhận'] || '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Nguồn nhận (TM/ Số TK)'] || '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        ${item['Ghi chú'] || ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Export to Excel
+        async function exportToExcel() {
+            toggleLoading(true);
+            try {
+                const wb = XLSX.utils.book_new();
+                const wsData = filteredData.map(item => ({
+                    'Phân loại': item['Phân loại'] || '',
+                    'Nhóm thu chi': item['Nhóm thu chi'] || '',
+                    'Ngày chứng từ': formatDate(item['Ngày chứng từ']),
+                    'Số chứng từ': item['Số chứng từ'] || '',
+                    'Số tiền': parseFloat(item['Số tiền']) || 0,
+                    'Diễn giải': item['Diển giải'] || '',
+                    'Người chi': item['Người chi'] || '',
+                    'Người nộp tiền': item['Người nộp tiền'] || '',
+                    'Tên công ty': item['Tên công ty'] || '',
+                    'Nguồn chi': item['Nguồn chi (TM/ Số TK)'] || '',
+                    'Người nhận': item['Người nhận'] || '',
+                    'Nguồn nhận': item['Nguồn nhận (TM/ Số TK)'] || '',
+                    'Ghi chú': item['Ghi chú'] || ''
+                }));
+
+                const ws = XLSX.utils.json_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, "Thu Chi Tồn Quỹ");
+                XLSX.writeFile(wb, `Bao_cao_thu_chi_ton_quy_${formatDate(new Date())}.xlsx`);
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Lỗi khi xuất báo cáo: ' + error.message);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // Utility functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+                maximumFractionDigits: 0
+            }).format(amount || 0);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize filter drawer controls
+            const openFiltersBtn = document.getElementById('openFilters');
+            const closeFiltersBtn = document.getElementById('closeFilters');
+            const filterBackdrop = document.getElementById('filterBackdrop');
+
+            openFiltersBtn.addEventListener('click', () => toggleFilterDrawer(true));
+            closeFiltersBtn.addEventListener('click', () => toggleFilterDrawer(false));
+            filterBackdrop.addEventListener('click', () => toggleFilterDrawer(false));
+
+            // Initialize quick date filters
+            document.querySelectorAll('.quick-date').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    document.querySelectorAll('.quick-date').forEach(btn =>
+                        btn.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    const days = e.target.dataset.days;
+                    const period = e.target.dataset.period;
+                    const endDate = new Date();
+                    let startDate = new Date();
+
+                    if (days) {
+                        startDate.setDate(startDate.getDate() - parseInt(days));
+                    } else if (period === 'month') {
+                        startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+                    } else if (period === 'year') {
+                        startDate = new Date(endDate.getFullYear(), 0, 1);
+                    }
+
+                    document.querySelector('[data-filter="startDate"]').value =
+                        startDate.toISOString().split('T')[0];
+                    document.querySelector('[data-filter="endDate"]').value =
+                        endDate.toISOString().split('T')[0];
+
+                    applyFilters();
+                });
+            });
+
+            // Initialize filter buttons
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+            document.getElementById('exportExcel').addEventListener('click', exportToExcel);
+
+            // Load XLSX library
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            script.onload = () => console.log('XLSX library loaded successfully');
+            script.onerror = () => {
+                console.error('Failed to load XLSX library');
+                alert('Không thể tải thư viện xuất Excel. Vui lòng thử lại sau.');
+            };
+            document.head.appendChild(script);
+
+            // Set default date range
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.querySelector('[data-filter="startDate"]').value =
+                firstDayOfMonth.toISOString().split('T')[0];
+            document.querySelector('[data-filter="endDate"]').value =
+                today.toISOString().split('T')[0];
+
+            // Initialize table scrolling
+            const tableContainer = document.querySelector('.table-container');
+            if (tableContainer) {
+                let isScrolling = false;
+                let startX;
+                let scrollLeft;
+
+                tableContainer.addEventListener('mousedown', (e) => {
+                    isScrolling = true;
+                    startX = e.pageX - tableContainer.offsetLeft;
+                    scrollLeft = tableContainer.scrollLeft;
+                });
+
+                tableContainer.addEventListener('mouseleave', () => {
+                    isScrolling = false;
+                });
+
+                tableContainer.addEventListener('mouseup', () => {
+                    isScrolling = false;
+                });
+
+                tableContainer.addEventListener('mousemove', (e) => {
+                    if (!isScrolling) return;
+                    e.preventDefault();
+                    const x = e.pageX - tableContainer.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    tableContainer.scrollLeft = scrollLeft - walk;
+                });
+            }
+
+            // Handle network status
+            window.addEventListener('online', () => {
+                console.log('Back online, refreshing data...');
+                fetchData();
+            });
+
+            window.addEventListener('offline', () => {
+                console.log('Connection lost');
+                alert('Mất kết nối mạng. Vui lòng kiểm tra kết nối internet của bạn.');
+            });
+
+            // Initial data load
+            fetchData();
+        });
+    </script>
+</body>
+
+</html>
