@@ -306,6 +306,10 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-6 border-b border-slate-200 flex flex-wrap justify-between items-center gap-4">
                 <h2 class="text-lg font-medium text-slate-800">Chi tiết thu chi tồn quỹ</h2>
+                <button id="printReport"
+                    class="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                    In báo cáo
+                </button>
                 <button id="exportExcel"
                     class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
                     Xuất Excel
@@ -554,6 +558,271 @@
             });
         }
 
+        // Add print styles to head
+        const printStyles = `
+@media print {
+    /* Hide everything except print content */
+    body > *:not(.print-content) {
+        display: none !important;
+    }
+    
+    /* Print styling */
+    .print-content {
+        display: block !important;
+        padding: 20px;
+        font-family: 'Times New Roman', Times, serif;
+    }
+
+    .print-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .print-header h1,
+    .print-header h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+    }
+
+    .print-table th,
+    .print-table td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+    }
+
+    .print-table th {
+        background-color: #f0f0f0;
+    }
+
+    /* Page break settings */
+    .page-break {
+        page-break-before: always;
+    }
+
+    /* Remove background colors and ensure black text */
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+        background: transparent !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
+}
+`;
+
+        // Thêm hàm tính số dư
+        function calculateBalance(data) {
+            let balance = 0;
+            data.forEach(item => {
+                const amount = parseFloat(String(item['Số tiền']).replace(/[^\d.-]/g, '')) || 0;
+                if (item['Phân loại']?.toLowerCase() === 'thu') {
+                    balance += amount;
+                } else if (item['Phân loại']?.toLowerCase() === 'chi') {
+                    balance -= amount;
+                }
+            });
+            return balance;
+        }
+
+        function printReport() {
+            // Get all data sorted by date
+            const allData = currentData.sort((a, b) =>
+                new Date(a['Ngày chứng từ']) - new Date(b['Ngày chứng từ'])
+            );
+
+            // Get filtered data date range
+            const startDate = document.querySelector('[data-filter="startDate"]').value;
+            const endDate = document.querySelector('[data-filter="endDate"]').value;
+
+            // Calculate opening balance (all transactions before start date)
+            const previousTransactions = allData.filter(item =>
+                new Date(item['Ngày chứng từ']) < new Date(startDate)
+            );
+            const openingBalance = calculateBalance(previousTransactions);
+
+            // Calculate current period transactions
+            const currentTransactions = filteredData;
+            const stats = {
+                openingBalance: openingBalance,
+                income: 0,
+                expense: 0
+            };
+
+            currentTransactions.forEach(item => {
+                const amount = parseFloat(String(item['Số tiền']).replace(/[^\d.-]/g, '')) || 0;
+                if (item['Phân loại']?.toLowerCase() === 'thu') {
+                    stats.income += amount;
+                } else if (item['Phân loại']?.toLowerCase() === 'chi') {
+                    stats.expense += amount;
+                }
+            });
+
+            stats.closingBalance = stats.openingBalance + stats.income - stats.expense;
+
+            // Separate transactions
+            const incomeTransactions = filteredData.filter(item =>
+                item['Phân loại']?.toLowerCase() === 'thu');
+            const expenseTransactions = filteredData.filter(item =>
+                item['Phân loại']?.toLowerCase() === 'chi');
+
+            const printContent = `
+        <style>
+            @media print {
+                @page { 
+                    size: A4;
+                    margin: 20mm 15mm;
+                }
+                .print-content {
+                    font-family: 'Times New Roman', Times, serif;
+                    font-size: 13px;
+                }
+                .print-header {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .print-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                }
+                .print-table th,
+                .print-table td {
+                    border: 1px solid black;
+                    padding: 5px;
+                    text-align: left;
+                }
+                .total-row td {
+                    font-weight: bold;
+                }
+                .page-break {
+                    page-break-before: always;
+                }
+            }
+        </style>
+        <div class="print-content">
+            <div class="print-header">
+                <h1 style="margin: 0; font-size: 16px;">CLB PICKLEBALL DOANH NHÂN TRẺ BÌNH DƯƠNG</h1>
+                <p style="margin: 5px 0;">45B, Yersin, Phú Cường, Thủ Dầu Một, Bình Dương</p>
+                <h2 style="margin: 20px 0; font-size: 16px;">SỔ BÁO CÁO THU - CHI</h2>
+                <p style="margin: 5px 0;">Từ ngày: ${formatDate(startDate)} Đến ngày ${formatDate(endDate)}</p>
+            </div>
+            
+            <p>Kính gửi: Ban Chấp Hành CLB PICKLEBALL Doanh Nhân trẻ Bình Dương</p>
+
+            <table class="print-table">
+                <tr>
+                    <th></th>
+                    <th>Tồn đầu</th>
+                    <th>Thu</th>
+                    <th>Chi</th>
+                    <th>Tồn cuối</th>
+                </tr>
+                <tr>
+                    <td>Ngân hàng TPBank<br/>(20022000000 Đoàn Thị Quỳnh Nga)</td>
+                    <td>${formatCurrency(stats.openingBalance)}</td>
+                    <td>${formatCurrency(stats.income)}</td>
+                    <td>${formatCurrency(stats.expense)}</td>
+                    <td>${formatCurrency(stats.closingBalance)}</td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 30px;">
+                <h3>BÁO CÁO THU</h3>
+                <table class="print-table">
+                    <tr>
+                        <th>STT</th>
+                        <th>Ngày</th>
+                        <th>Số chứng từ</th>
+                        <th>Nhóm thu</th>
+                        <th>Số tiền</th>
+                        <th>Diễn giải</th>
+                        <th>Người nộp tiền</th>
+                        <th>Nguồn chi (TK)</th>
+                        <th>Người nhận</th>
+                        <th>Nguồn nhận (TK)</th>
+                    </tr>
+                    ${incomeTransactions.map((item, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${formatDate(item['Ngày chứng từ'])}</td>
+                            <td>${item['Số chứng từ'] || ''}</td>
+                            <td>${item['Nhóm thu chi'] || ''}</td>
+                            <td>${formatCurrency(item['Số tiền'])}</td>
+                            <td>${item['Diển giải'] || ''}</td>
+                            <td>${item['Người nộp tiền'] || ''}</td>
+                            <td>${item['Nguồn chi (TM/ Số TK)'] || ''}</td>
+                            <td>${item['Người nhận'] || ''}</td>
+                            <td>${item['Nguồn nhận (TM/ Số TK)'] || ''}</td>
+                        </tr>
+                    `).join('')}
+                    <tr class="total-row">
+                        <td colspan="4" style="text-align: right;">Tổng thu:</td>
+                        <td colspan="6">${formatCurrency(stats.income)}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="page-break">
+                <h3>BÁO CÁO CHI</h3>
+                <table class="print-table">
+                    <tr>
+                        <th>STT</th>
+                        <th>Ngày</th>
+                        <th>Số chứng từ</th>
+                        <th>Nhóm chi</th>
+                        <th>Số tiền</th>
+                        <th>Diễn giải</th>
+                        <th>Người chi</th>
+                        <th>Nguồn chi (TK)</th>
+                        <th>Người nhận</th>
+                        <th>Nguồn nhận (TK)</th>
+                    </tr>
+                    ${expenseTransactions.map((item, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${formatDate(item['Ngày chứng từ'])}</td>
+                            <td>${item['Số chứng từ'] || ''}</td>
+                            <td>${item['Nhóm thu chi'] || ''}</td>
+                            <td>${formatCurrency(item['Số tiền'])}</td>
+                            <td>${item['Diển giải'] || ''}</td>
+                            <td>${item['Người chi'] || ''}</td>
+                            <td>${item['Nguồn chi (TM/ Số TK)'] || ''}</td>
+                            <td>${item['Người nhận'] || ''}</td>
+                            <td>${item['Nguồn nhận (TM/ Số TK)'] || ''}</td>
+                        </tr>
+                    `).join('')}
+                    <tr class="total-row">
+                        <td colspan="4" style="text-align: right;">Tổng chi:</td>
+                        <td colspan="6">${formatCurrency(stats.expense)}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    `;
+
+            // Create print window
+            const printWindow = window.open('', '', 'width=1000,height=600');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+
+            // Print after images are loaded
+            printWindow.onload = function () {
+                printWindow.print();
+                printWindow.close();
+            };
+        }
+
+        
         // Reset all filters
         function resetFilters() {
             // Reset tất cả các filter về giá trị mặc định
@@ -935,6 +1204,7 @@
             document.getElementById('applyFilters').addEventListener('click', applyFilters);
             document.getElementById('resetFilters').addEventListener('click', resetFilters);
             document.getElementById('exportExcel').addEventListener('click', exportToExcel);
+            document.getElementById('printReport').addEventListener('click', printReport);
 
             // Load XLSX library
             const script = document.createElement('script');
