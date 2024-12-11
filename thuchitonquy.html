@@ -643,36 +643,77 @@
             const startDate = document.querySelector('[data-filter="startDate"]').value;
             const endDate = document.querySelector('[data-filter="endDate"]').value;
 
-            // Calculate opening balance (all transactions before start date)
-            const previousTransactions = allData.filter(item =>
-                new Date(item['Ngày chứng từ']) < new Date(startDate)
-            );
-            const openingBalance = calculateBalance(previousTransactions);
+            // Nhóm dữ liệu theo nguồn giao dịch
+            const sourceGroups = new Map();
 
-            // Calculate current period transactions
-            const currentTransactions = filteredData;
-            const stats = {
-                openingBalance: openingBalance,
-                income: 0,
-                expense: 0
-            };
+            // Lấy nguồn giao dịch được chọn từ bộ lọc
+            const selectedSource = document.querySelector('[data-filter="source"]').value;
 
-            currentTransactions.forEach(item => {
-                const amount = parseFloat(String(item['Số tiền']).replace(/[^\d.-]/g, '')) || 0;
-                if (item['Phân loại']?.toLowerCase() === 'thu') {
-                    stats.income += amount;
-                } else if (item['Phân loại']?.toLowerCase() === 'chi') {
-                    stats.expense += amount;
-                }
+            // Xử lý dữ liệu theo từng nguồn
+            allData.forEach(item => {
+                // Lấy nguồn từ cả nguồn chi và nguồn nhận
+                const sources = new Set([
+                    item['Nguồn chi (TM/ Số TK)'],
+                    item['Nguồn nhận (TM/ Số TK)']
+                ].filter(Boolean)); // Lọc bỏ giá trị null/undefined
+
+                sources.forEach(source => {
+                    if (!source) return;
+
+                    if (!sourceGroups.has(source)) {
+                        sourceGroups.set(source, {
+                            openingBalance: 0,
+                            income: 0,
+                            expense: 0,
+                            closingBalance: 0
+                        });
+                    }
+
+                    const sourceStats = sourceGroups.get(source);
+                    const amount = parseFloat(String(item['Số tiền']).replace(/[^\d.-]/g, '')) || 0;
+
+                    // Tính số dư đầu kỳ
+                    if (new Date(item['Ngày chứng từ']) < new Date(startDate)) {
+                        if (item['Phân loại']?.toLowerCase() === 'thu') {
+                            sourceStats.openingBalance += amount;
+                        } else if (item['Phân loại']?.toLowerCase() === 'chi') {
+                            sourceStats.openingBalance -= amount;
+                        }
+                    }
+                    // Tính thu chi trong kỳ
+                    else if (new Date(item['Ngày chứng từ']) <= new Date(endDate)) {
+                        if (item['Phân loại']?.toLowerCase() === 'thu') {
+                            sourceStats.income += amount;
+                        } else if (item['Phân loại']?.toLowerCase() === 'chi') {
+                            sourceStats.expense += amount;
+                        }
+                    }
+                });
             });
 
-            stats.closingBalance = stats.openingBalance + stats.income - stats.expense;
+            // Tính số dư cuối cho mỗi nguồn
+            sourceGroups.forEach(stats => {
+                stats.closingBalance = stats.openingBalance + stats.income - stats.expense;
+            });
 
-            // Separate transactions
+            // Separate transactions for current period
             const incomeTransactions = filteredData.filter(item =>
                 item['Phân loại']?.toLowerCase() === 'thu');
             const expenseTransactions = filteredData.filter(item =>
                 item['Phân loại']?.toLowerCase() === 'chi');
+
+            // Tạo HTML cho bảng tổng hợp
+            const summaryTableRows = Array.from(sourceGroups.entries())
+                .filter(([source]) => !selectedSource || source === selectedSource)
+                .map(([source, stats]) => `
+            <tr>
+                <td>${source}</td>
+                <td>${formatCurrency(stats.openingBalance)}</td>
+                <td>${formatCurrency(stats.income)}</td>
+                <td>${formatCurrency(stats.expense)}</td>
+                <td>${formatCurrency(stats.closingBalance)}</td>
+            </tr>
+        `).join('');
 
             const printContent = `
         <style>
@@ -720,19 +761,13 @@
 
             <table class="print-table">
                 <tr>
-                    <th></th>
+                    <th>Nguồn giao dịch</th>
                     <th>Tồn đầu</th>
                     <th>Thu</th>
                     <th>Chi</th>
                     <th>Tồn cuối</th>
                 </tr>
-                <tr>
-                    <td>Ngân hàng TPBank<br/>(20022000000 Đoàn Thị Quỳnh Nga)</td>
-                    <td>${formatCurrency(stats.openingBalance)}</td>
-                    <td>${formatCurrency(stats.income)}</td>
-                    <td>${formatCurrency(stats.expense)}</td>
-                    <td>${formatCurrency(stats.closingBalance)}</td>
-                </tr>
+                ${summaryTableRows}
             </table>
 
             <div style="margin-top: 30px;">
@@ -766,7 +801,7 @@
                     `).join('')}
                     <tr class="total-row">
                         <td colspan="4" style="text-align: right;">Tổng thu:</td>
-                        <td colspan="6">${formatCurrency(stats.income)}</td>
+                        <td colspan="6">${formatCurrency(Array.from(sourceGroups.values()).reduce((sum, stats) => sum + stats.income, 0))}</td>
                     </tr>
                 </table>
             </div>
@@ -802,7 +837,7 @@
                     `).join('')}
                     <tr class="total-row">
                         <td colspan="4" style="text-align: right;">Tổng chi:</td>
-                        <td colspan="6">${formatCurrency(stats.expense)}</td>
+                        <td colspan="6">${formatCurrency(Array.from(sourceGroups.values()).reduce((sum, stats) => sum + stats.expense, 0))}</td>
                     </tr>
                 </table>
             </div>
@@ -822,7 +857,7 @@
             };
         }
 
-        
+
         // Reset all filters
         function resetFilters() {
             // Reset tất cả các filter về giá trị mặc định
