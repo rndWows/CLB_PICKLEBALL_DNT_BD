@@ -243,32 +243,16 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Người chi</label>
-                            <select data-filter="payer"
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Người thực hiện</label>
+                            <select data-filter="person"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="">Tất cả</option>
                             </select>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nguồn chi</label>
-                            <select data-filter="paymentSource"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Người nhận</label>
-                            <select data-filter="receiver"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="">Tất cả</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nguồn nhận</label>
-                            <select data-filter="receiveSource"
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nguồn giao dịch</label>
+                            <select data-filter="source"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="">Tất cả</option>
                             </select>
@@ -381,10 +365,8 @@
         let uniqueValues = {
             categories: new Set(),
             groups: new Set(),
-            payers: new Set(),
-            paymentSources: new Set(),
-            receivers: new Set(),
-            receiveSources: new Set()
+            persons: new Set(),  // Thêm cái này
+            sources: new Set(),  // Thêm cái này
         };
 
         // Loading indicator
@@ -444,27 +426,30 @@
         }
 
         // Populate filter options
+        // Populate filter options  
         function populateFilters() {
             // Reset unique values
             Object.keys(uniqueValues).forEach(key => uniqueValues[key].clear());
 
-            // Collect unique values from data
+            // Collect unique values from data  
             currentData.forEach(item => {
                 if (item['Phân loại']) uniqueValues.categories.add(item['Phân loại']);
                 if (item['Nhóm thu chi']) uniqueValues.groups.add(item['Nhóm thu chi']);
-                if (item['Người chi']) uniqueValues.payers.add(item['Người chi']);
-                if (item['Nguồn chi (TM/ Số TK)']) uniqueValues.paymentSources.add(item['Nguồn chi (TM/ Số TK)']);
-                if (item['Người nhận']) uniqueValues.receivers.add(item['Người nhận']);
-                if (item['Nguồn nhận (TM/ Số TK)']) uniqueValues.receiveSources.add(item['Nguồn nhận (TM/ Số TK)']);
+
+                // Gộp người chi và người nhận
+                if (item['Người chi']) uniqueValues.persons.add(item['Người chi']);
+                if (item['Người nhận']) uniqueValues.persons.add(item['Người nhận']);
+
+                // Gộp nguồn chi và nguồn nhận
+                if (item['Nguồn chi (TM/ Số TK)']) uniqueValues.sources.add(item['Nguồn chi (TM/ Số TK)']);
+                if (item['Nguồn nhận (TM/ Số TK)']) uniqueValues.sources.add(item['Nguồn nhận (TM/ Số TK)']);
             });
 
             // Update select elements
             updateSelect('category', uniqueValues.categories);
             updateSelect('group', uniqueValues.groups);
-            updateSelect('payer', uniqueValues.payers);
-            updateSelect('paymentSource', uniqueValues.paymentSources);
-            updateSelect('receiver', uniqueValues.receivers);
-            updateSelect('receiveSource', uniqueValues.receiveSources);
+            updateSelect('person', uniqueValues.persons);
+            updateSelect('source', uniqueValues.sources);
         }
 
         // Update select element options
@@ -487,10 +472,8 @@
                 endDate: document.querySelector('[data-filter="endDate"]').value,
                 category: document.querySelector('[data-filter="category"]').value,
                 group: document.querySelector('[data-filter="group"]').value,
-                payer: document.querySelector('[data-filter="payer"]').value,
-                paymentSource: document.querySelector('[data-filter="paymentSource"]').value,
-                receiver: document.querySelector('[data-filter="receiver"]').value,
-                receiveSource: document.querySelector('[data-filter="receiveSource"]').value
+                person: document.querySelector('[data-filter="person"]').value,
+                source: document.querySelector('[data-filter="source"]').value
             };
 
             filteredData = currentData.filter(item => {
@@ -510,10 +493,12 @@
 
                 if (filters.category && item['Phân loại'] !== filters.category) return false;
                 if (filters.group && item['Nhóm thu chi'] !== filters.group) return false;
-                if (filters.payer && item['Người chi'] !== filters.payer) return false;
-                if (filters.paymentSource && item['Nguồn chi (TM/ Số TK)'] !== filters.paymentSource) return false;
-                if (filters.receiver && item['Người nhận'] !== filters.receiver) return false;
-                if (filters.receiveSource && item['Nguồn nhận (TM/ Số TK)'] !== filters.receiveSource) return false;
+
+                // Kiểm tra người thực hiện (cả chi và nhận)
+                if (filters.person && item['Người chi'] !== filters.person && item['Người nhận'] !== filters.person) return false;
+
+                // Kiểm tra nguồn giao dịch (cả chi và nhận) 
+                if (filters.source && item['Nguồn chi (TM/ Số TK)'] !== filters.source && item['Nguồn nhận (TM/ Số TK)'] !== filters.source) return false;
 
                 return true;
             });
@@ -532,10 +517,8 @@
             const filters = {
                 'Phân loại': document.querySelector('[data-filter="category"]').value,
                 'Nhóm': document.querySelector('[data-filter="group"]').value,
-                'Người chi': document.querySelector('[data-filter="payer"]').value,
-                'Nguồn chi': document.querySelector('[data-filter="paymentSource"]').value,
-                'Người nhận': document.querySelector('[data-filter="receiver"]').value,
-                'Nguồn nhận': document.querySelector('[data-filter="receiveSource"]').value
+                'Người thực hiện': document.querySelector('[data-filter="person"]').value,
+                'Nguồn giao dịch': document.querySelector('[data-filter="source"]').value
             };
 
             for (const [key, value] of Object.entries(filters)) {
@@ -561,10 +544,8 @@
                     const filterMap = {
                         'phân loại': 'category',
                         'nhóm': 'group',
-                        'người chi': 'payer',
-                        'nguồn chi': 'paymentSource',
-                        'người nhận': 'receiver',
-                        'nguồn nhận': 'receiveSource'
+                        'người thực hiện': 'person',
+                        'nguồn giao dịch': 'source'
                     };
 
                     document.querySelector(`[data-filter="${filterMap[filterKey]}"]`).value = '';
