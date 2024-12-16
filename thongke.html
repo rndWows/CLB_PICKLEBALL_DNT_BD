@@ -198,14 +198,6 @@
                 <canvas id="growthChart"></canvas>
             </div>
             <div class="chart-container">
-                <div class="chart-title">PHÂN BỐ HỘI VIÊN THEO CHỨC VỤ</div>
-                <canvas id="roleChart"></canvas>
-                <div class="total-stats">
-                    <div class="total-number" id="totalRoleMembers">0</div>
-                    <div class="total-label">Tổng số hội viên</div>
-                </div>
-            </div>
-            <div class="chart-container">
                 <div class="chart-title">TRẠNG THÁI ĐÓNG HỘI PHÍ</div>
                 <canvas id="feeChart"></canvas>
                 <div class="total-stats">
@@ -213,7 +205,11 @@
                     <div class="total-label">Tổng số hội viên</div>
                 </div>
             </div>
-            <div class="chart-container map-chart">
+            <div class="chart-container">
+                <div class="chart-title">THỐNG KÊ THEO THÀNH PHỐ</div>
+                <canvas id="cityStatsChart"></canvas>
+            </div>
+            <div class="chart-container">
                 <div class="chart-title">BẢN ĐỒ PHÂN BỐ HỘI VIÊN</div>
                 <div id="map"></div>
             </div>
@@ -232,17 +228,21 @@
         const geocodeCache = new Map();
 
         let growthChart = null;
-        let roleChart = null;
         let feeChart = null;
+        let cityStatsChart = null;
         let map;
         let markers = L.layerGroup();
 
+        // Mở rộng danh sách tọa độ mặc định
         const defaultCoords = {
             'Thủ Dầu Một': [11.0005, 106.6577],
             'Thuận An': [10.9316, 106.7127],
             'Dĩ An': [10.9075, 106.7866],
             'Bến Cát': [11.1527, 106.6072],
-            'Tân Uyên': [11.0237, 106.8120]
+            'Tân Uyên': [11.0237, 106.8120],
+            'Phú Giáo': [11.3333, 106.7833],
+            'Bàu Bàng': [11.2667, 106.6333],
+            'Dầu Tiếng': [11.3167, 106.4500]
         };
 
         const chartColors = {
@@ -286,27 +286,31 @@
 
         // Các hàm tiện ích
         function normalizeAddress(address) {
-            const addresses = address.split(/(?=[0-9])/);
-            let normalizedAddress = addresses[0];
+            const cleanAddress = address.trim()
+                .replace(/^(số|so|So|SỐ)\s*\d+[,\s]*/i, '')
+                .replace(/^(đường|duong|Đường)\s*[\w\d]+[,\s]*/i, '')
+                .replace(/\s+/g, ' ');
 
-            const cityMatch = normalizedAddress.match(/(TP\.|Thành phố|TX\.|Thị xã)\s*(Thủ Dầu Một|Thuận An|Dĩ An|Bến Cát|Tân Uyên)/i);
-            const wardMatch = normalizedAddress.match(/(P\.|Phường|X\.|Xã)\s*([^,]+)/i);
+            const districtPatterns = [
+                /(TP\.|Thành phố|TX\.|Thị xã|H\.|Huyện)\s*([\p{L}\s]+?)(?=,|$)/ui,
+                /(P\.|Phường|X\.|Xã|TT\.|Thị trấn)\s*([\p{L}\s]+?)(?=,|$)/ui
+            ];
 
             let result = '';
-
-            if (cityMatch) {
-                const cityName = cityMatch[2].trim();
-                result = cityName;
+            for (const pattern of districtPatterns) {
+                const match = cleanAddress.match(pattern);
+                if (match) {
+                    const locationName = match[2].trim();
+                    result = result ? `${locationName}, ${result}` : locationName;
+                }
             }
 
-            if (wardMatch) {
-                const wardName = wardMatch[2].trim();
-                result = `${wardName}, ${result}`;
+            if (!result) {
+                // Nếu không tìm thấy pattern, lấy phần đầu tiên của địa chỉ
+                result = cleanAddress.split(',')[0].trim();
             }
 
-            result += ', Bình Dương, Việt Nam';
-
-            return address;
+            return `${result}, Bình Dương, Việt Nam`;
         }
 
         async function delay(ms) {
@@ -317,40 +321,61 @@
             try {
                 const normalizedAddress = normalizeAddress(address);
 
+                // Kiểm tra cache
                 if (geocodeCache.has(normalizedAddress)) {
                     return geocodeCache.get(normalizedAddress);
                 }
 
+                // Kiểm tra trong defaultCoords
                 for (const [city, coords] of Object.entries(defaultCoords)) {
-                    if (normalizedAddress.includes(city)) {
-                        geocodeCache.set(normalizedAddress, coords);
-                        return coords;
+                    if (normalizedAddress.toLowerCase().includes(city.toLowerCase())) {
+                        // Thêm một chút ngẫu nhiên để điểm không chồng lên nhau
+                        const randomOffset = () => (Math.random() - 0.5) * 0.01;
+                        const adjustedCoords = [
+                            coords[0] + randomOffset(),
+                            coords[1] + randomOffset()
+                        ];
+                        geocodeCache.set(normalizedAddress, adjustedCoords);
+                        return adjustedCoords;
                     }
                 }
 
+                // Thử geocoding với Nominatim
                 for (let i = 0; i < retries; i++) {
                     try {
-                        await delay(delayMs);
+                        await delay(delayMs * (i + 1)); // Tăng thời gian delay mỗi lần thử
                         const response = await fetch(
-                            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(normalizedAddress)}&limit=1`
+                            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(normalizedAddress)}&limit=1&countrycodes=vn`
                         );
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
                         const data = await response.json();
 
                         if (data && data[0]) {
-                            const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                            const coords = [
+                                parseFloat(data[0].lat) + (Math.random() - 0.5) * 0.002,
+                                parseFloat(data[0].lon) + (Math.random() - 0.5) * 0.002
+                            ];
                             geocodeCache.set(normalizedAddress, coords);
                             return coords;
                         }
                     } catch (error) {
-                        console.error(`Lần thử ${i + 1} thất bại cho địa chỉ "${normalizedAddress}":`, error);
-                        if (i === retries - 1) break;
+                        console.warn(`Lần thử ${i + 1} thất bại cho địa chỉ "${normalizedAddress}":`, error);
+                        if (i === retries - 1) throw error;
                     }
                 }
 
-                return [10.9804, 106.6519];
+                // Nếu không thể geocode, sử dụng tọa độ mặc định cho Bình Dương
+                const defaultCoord = [10.9804 + (Math.random() - 0.5) * 0.01, 106.6519 + (Math.random() - 0.5) * 0.01];
+                geocodeCache.set(normalizedAddress, defaultCoord);
+                return defaultCoord;
             } catch (error) {
                 console.error('Lỗi geocoding:', error);
-                return [10.9804, 106.6519];
+                // Trả về tọa độ mặc định với offset ngẫu nhiên
+                return [10.9804 + (Math.random() - 0.5) * 0.01, 106.6519 + (Math.random() - 0.5) * 0.01];
             }
         }
 
@@ -499,48 +524,161 @@
             markers.clearLayers();
 
             const activeMembers = filteredData.filter(member => member.Active === "active");
+            const addressGroups = new Map();
 
-            // Không group nữa, mỗi member sẽ có một marker riêng
-            for (const member of activeMembers) {
+            // Nhóm các member theo địa chỉ
+            activeMembers.forEach(member => {
                 const address = member["Nơi ở hiện tại"] || "Không xác định";
-                const coords = await geocodeAddressWithRetry(address);
-
-                if (coords) {
-                    const marker = L.marker(coords, {
-                        icon: L.divIcon({
-                            className: 'cluster-marker',
-                            html: `<div style="
-                        width: 25px;
-                        height: 25px;
-                        background: #3388ff;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: white;
-                        font-weight: bold;
-                        font-size: 14px;
-                    ">1</div>`
-                        })
-                    });
-
-                    const popupContent = `
-                <div class="map-marker-info">
-                    <h3>${address}</h3>
-                    <p>Hội viên: ${member["Tên hội viên"]}</p>
-                </div>
-            `;
-
-                    marker.bindPopup(popupContent);
-                    markers.addLayer(marker);
+                if (!addressGroups.has(address)) {
+                    addressGroups.set(address, []);
                 }
+                addressGroups.get(address).push(member);
+            });
+
+            // Tạo marker cho mỗi nhóm địa chỉ
+            for (const [address, members] of addressGroups) {
+                try {
+                    const coords = await geocodeAddressWithRetry(address);
+
+                    if (coords) {
+                        const marker = L.marker(coords, {
+                            icon: L.divIcon({
+                                className: 'cluster-marker',
+                                html: `<div style="
+                                    width: ${Math.min(25 + members.length * 2, 40)}px;
+                                    height: ${Math.min(25 + members.length * 2, 40)}px;
+                                    background: #3388ff;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: white;
+                                    font-weight: bold;
+                                    font-size: 14px;
+                                    border: 2px solid white;
+                                    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+                                ">${members.length}</div>`
+                            })
+                        });
+
+                        const popupContent = `
+                            <div class="map-marker-info">
+                                <h3>${address}</h3>
+                                <p>Số hội viên: ${members.length}</p>
+                                <ul style="max-height: 150px; overflow-y: auto; padding-left: 20px;">
+                                    ${members.map(member => `<li>${member["Tên hội viên"]}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+
+                        marker.bindPopup(popupContent);
+                        markers.addLayer(marker);
+                    }
+                } catch (error) {
+                    console.error(`Lỗi khi xử lý địa chỉ "${address}":`, error);
+                }
+            }
+
+            // Điều chỉnh view để hiển thị tất cả markers
+            const markerBounds = L.featureGroup([...markers.getLayers()]).getBounds();
+            if (markerBounds.isValid()) {
+                map.fitBounds(markerBounds, { padding: [50, 50] });
             }
         }
 
+        function processCityStats(data) {
+            const cityStats = new Map();
+
+            // Định nghĩa các alias (tên gọi khác) cho các thành phố
+            const cityAliases = {
+                'Thủ Dầu Một': ['TDM', 'Thu Dau Mot', 'ThuDauMot'],
+                'Thuận An': ['Thuan An', 'ThuanAn'],
+                'Dĩ An': ['Di An', 'DiAn'],
+                'Bến Cát': ['Ben Cat', 'BenCat'],
+                'Tân Uyên': ['Tan Uyen', 'TanUyen'],
+                'Phú Giáo': ['Phu Giao', 'PhuGiao'],
+                'Bàu Bàng': ['Bau Bang', 'BauBang'],
+                'Dầu Tiếng': ['Dau Tieng', 'DauTieng']
+            };
+
+            data.filter(member => member.Active === "active").forEach(member => {
+                const address = member["Nơi ở hiện tại"] || "";
+                const normalizedAddress = address.normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')  // Bỏ dấu
+                    .toUpperCase();
+
+                let foundCity = null;
+
+                // Tìm kiếm theo pattern chuẩn (TP., Thành phố, TX., etc.)
+                const cityPattern = /(TP\.|THANH PHO|TX\.|THI XA|HUYEN|H\.)\s*([\p{L}\s]+?)(?=,|$)/ui;
+                const match = normalizedAddress.match(cityPattern);
+                if (match) {
+                    const cityName = match[2].trim();
+                    // Tìm tên thành phố tương ứng
+                    for (const [city, aliases] of Object.entries(cityAliases)) {
+                        if (aliases.some(alias => cityName.includes(alias.toUpperCase())) ||
+                            cityName.includes(city.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase())) {
+                            foundCity = city;
+                            break;
+                        }
+                    }
+                }
+
+                // Nếu không tìm thấy theo pattern, tìm trực tiếp trong địa chỉ
+                if (!foundCity) {
+                    for (const [city, aliases] of Object.entries(cityAliases)) {
+                        if (aliases.some(alias => normalizedAddress.includes(alias.toUpperCase())) ||
+                            normalizedAddress.includes(city.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase())) {
+                            foundCity = city;
+                            break;
+                        }
+                    }
+                }
+
+                // Nếu vẫn không tìm thấy, kiểm tra xem có phường/xã của thành phố nào không
+                if (!foundCity) {
+                    // Thêm mapping phường/xã với thành phố tương ứng
+                    const wardCityMapping = {
+                        'PHU HOA': 'Thủ Dầu Một',
+                        'PHU CUONG': 'Thủ Dầu Một',
+                        'BINH THANG': 'Dĩ An',
+                        'TAN DONG HIEP': 'Dĩ An',
+                        'AN PHU': 'Thuận An',
+                        // Thêm các phường/xã khác tương ứng với thành phố
+                    };
+
+                    for (const [ward, city] of Object.entries(wardCityMapping)) {
+                        if (normalizedAddress.includes(ward)) {
+                            foundCity = city;
+                            break;
+                        }
+                    }
+                }
+
+                // Thêm vào thống kê
+                if (foundCity) {
+                    if (!cityStats.has(foundCity)) {
+                        cityStats.set(foundCity, 0);
+                    }
+                    cityStats.set(foundCity, cityStats.get(foundCity) + 1);
+                }
+            });
+
+            // Sắp xếp theo số lượng giảm dần
+            const sortedStats = Array.from(cityStats.entries())
+                .sort((a, b) => b[1] - a[1]);
+
+            return {
+                labels: sortedStats.map(([city]) => city),
+                data: sortedStats.map(([, count]) => count)
+            };
+        }
+
+
         async function renderCharts() {
             if (growthChart) growthChart.destroy();
-            if (roleChart) roleChart.destroy();
             if (feeChart) feeChart.destroy();
+            if (cityStatsChart) cityStatsChart.destroy();
 
             const filteredData = currentFilter === 'all' ? allData :
                 filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
@@ -598,97 +736,6 @@
                         x: {
                             grid: {
                                 display: false
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Role Chart với cải tiến
-            const roleData = filteredData.filter(member => member.Active === "active")
-                .reduce((acc, member) => {
-                    const role = member["Chức vụ (Hội)"] || "Không xác định";
-                    acc[role] = (acc[role] || 0) + 1;
-                    return acc;
-                }, {});
-
-            const totalMembers = Object.values(roleData).reduce((a, b) => a + b, 0);
-            document.getElementById('totalRoleMembers').textContent = totalMembers.toLocaleString();
-
-            const roleCtx = document.getElementById('roleChart').getContext('2d');
-            roleChart = new Chart(roleCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(roleData),
-                    datasets: [{
-                        data: Object.values(roleData),
-                        backgroundColor: [
-                            chartColors.blue[0],
-                            chartColors.green[0],
-                            chartColors.orange[0],
-                            chartColors.purple[0],
-                            chartColors.red[0]
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    ...commonOptions,
-                    cutout: '60%',
-                    radius: '90%',
-                    layout: {
-                        padding: 20
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            align: 'center',
-                            labels: {
-                                generateLabels: (chart) => {
-                                    const data = chart.data;
-                                    return data.labels.map((label, i) => {
-                                        const value = data.datasets[0].data[i];
-                                        const percentage = ((value / totalMembers) * 100).toFixed(1);
-                                        return {
-                                            text: `${label}: ${value.toLocaleString()} (${percentage}%)`,
-                                            fillStyle: data.datasets[0].backgroundColor[i],
-                                            hidden: isNaN(value),
-                                            index: i,
-                                            strokeStyle: '#fff',
-                                            lineWidth: 2
-                                        };
-                                    });
-                                },
-                                padding: 15,
-                                font: {
-                                    size: 12,
-                                    weight: 'bold'
-                                },
-                                color: '#333'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const value = context.raw;
-                                    const percentage = ((value / totalMembers) * 100).toFixed(1);
-                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
-                                }
-                            }
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            font: {
-                                weight: 'bold',
-                                size: 12
-                            },
-                            formatter: (value) => {
-                                const percentage = ((value / totalMembers) * 100).toFixed(1);
-                                if (percentage > 5) {
-                                    return `${percentage}%`;
-                                }
-                                return '';
                             }
                         }
                     }
@@ -784,9 +831,60 @@
                 }
             });
 
+            // Thêm City Stats Chart
+            const cityStats = processCityStats(filteredData);
+            const cityStatsCtx = document.getElementById('cityStatsChart').getContext('2d');
+            cityStatsChart = new Chart(cityStatsCtx, {
+                type: 'bar',
+                data: {
+                    labels: cityStats.labels,
+                    datasets: [{
+                        label: 'Số hội viên',
+                        data: cityStats.data,
+                        backgroundColor: chartColors.blue[0],
+                        borderColor: chartColors.blue[1],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'y',
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'right',
+                            color: '#333',
+                            font: {
+                                weight: 'bold'
+                            },
+                            formatter: (value) => value.toLocaleString()
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
             // Update map
             await updateMap(filteredData);
         }
+        // Thay đổi CSS Grid để hiển thị 4 biểu đồ
+        document.querySelector('.chart-grid').style.gridTemplateColumns = 'repeat(2, 1fr)';
 
         document.getElementById('monthFilter').addEventListener('change', function (e) {
             currentFilter = e.target.value;
