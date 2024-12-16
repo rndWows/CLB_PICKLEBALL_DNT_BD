@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Báo Cáo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
     <style>
         * {
             margin: 0;
@@ -30,7 +34,6 @@
             border-radius: 12px;
         }
 
-        /* Filter Styles */
         .filter-container {
             margin-bottom: 1.5rem;
             background-color: #f8fafc;
@@ -84,49 +87,6 @@
             }
         }
 
-        /* Tabs Section */
-        .tabs {
-            display: flex;
-            gap: 0.25rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 1px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            white-space: nowrap;
-        }
-
-        .tabs::-webkit-scrollbar {
-            display: none;
-        }
-
-        .tab-button {
-            padding: 0.5rem 1rem;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-weight: 600;
-            color: #64748b;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            transition: all 0.3s ease;
-            font-size: 0.875rem;
-        }
-
-        @media (min-width: 640px) {
-            .tab-button {
-                padding: 0.75rem 1.5rem;
-                font-size: 0.9rem;
-            }
-        }
-
-        .tab-button.active {
-            color: #3b82f6;
-            border-bottom-color: #3b82f6;
-        }
-
-        /* Chart Grid */
         .chart-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -148,6 +108,12 @@
             border: 1px solid rgba(0, 0, 0, 0.1);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             height: 300px;
+            position: relative;
+        }
+
+        .chart-container.map-chart {
+            grid-column: 1 / -1;
+            height: 500px;
         }
 
         @media (min-width: 640px) {
@@ -180,61 +146,45 @@
             }
         }
 
-        /* Status Messages */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            color: #64748b;
-            font-weight: 500;
-            font-size: 0.875rem;
-        }
-
-        .error {
-            color: #ef4444;
-            padding: 1rem;
+        .total-stats {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
-            background-color: #fef2f2;
-            border-radius: 8px;
-            border: 1px solid #fee2e2;
-            margin: 1rem;
+            pointer-events: none;
+        }
+
+        .total-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .total-label {
             font-size: 0.875rem;
+            color: #6b7280;
         }
 
-        /* Chart Responsive Fixes */
-        canvas {
-            width: 100% !important;
-            max-height: 100% !important;
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            z-index: 1;
         }
 
-        /* Tab Content Animation */
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .tab-content.active {
-            display: block;
+        .chart-tooltip {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
         }
     </style>
 </head>
 
 <body>
     <div class="dashboard">
-        <!-- Filter Section -->
         <div class="filter-container">
             <label class="filter-label" for="monthFilter">Xem theo tháng:</label>
             <select id="monthFilter" class="filter-select">
@@ -242,58 +192,59 @@
             </select>
         </div>
 
-        <!-- Tabs Section -->
-        <div class="tabs">
-            <button class="tab-button active" onclick="openTab(event, 'members')">Thống Kê Hội Viên</button>
-            <button class="tab-button" onclick="openTab(event, 'finance')">Thống Kê Tài Chính</button>
-        </div>
-
-        <!-- Content Sections -->
-        <div id="members" class="tab-content active">
-            <div class="chart-grid">
-                <div class="chart-container">
-                    <div class="chart-title">TĂNG TRƯỞNG HỘI VIÊN THEO THỜI GIAN</div>
-                    <canvas id="growthChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-title">PHÂN BỐ HỘI VIÊN THEO CHỨC VỤ</div>
-                    <canvas id="roleChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-title">TRẠNG THÁI HOẠT ĐỘNG CỦA HỘI VIÊN</div>
-                    <canvas id="statusChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-title">TRẠNG THÁI ĐÓNG HỘI PHÍ</div>
-                    <canvas id="feeChart"></canvas>
+        <div id="members" class="chart-grid">
+            <div class="chart-container">
+                <div class="chart-title">TĂNG TRƯỞNG HỘI VIÊN THEO THỜI GIAN</div>
+                <canvas id="growthChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">PHÂN BỐ HỘI VIÊN THEO CHỨC VỤ</div>
+                <canvas id="roleChart"></canvas>
+                <div class="total-stats">
+                    <div class="total-number" id="totalRoleMembers">0</div>
+                    <div class="total-label">Tổng số hội viên</div>
                 </div>
             </div>
-        </div>
-
-        <div id="finance" class="tab-content">
             <div class="chart-container">
-                <div class="chart-title">THỐNG KÊ THU CHI THEO THÁNG</div>
-                <canvas id="financeChart"></canvas>
+                <div class="chart-title">TRẠNG THÁI ĐÓNG HỘI PHÍ</div>
+                <canvas id="feeChart"></canvas>
+                <div class="total-stats">
+                    <div class="total-number" id="totalFeeMembers">0</div>
+                    <div class="total-label">Tổng số hội viên</div>
+                </div>
+            </div>
+            <div class="chart-container map-chart">
+                <div class="chart-title">BẢN ĐỒ PHÂN BỐ HỘI VIÊN</div>
+                <div id="map"></div>
             </div>
         </div>
     </div>
 
     <script>
+        // Đăng ký plugin datalabels
+        Chart.register(ChartDataLabels);
+
         const appId = 'd9ee17ac-4397-452d-9e74-97997607fa4b';
         const accessKey = 'V2-Rovhm-ZiLxx-msd7k-TSoig-NkECL-5LXEq-Kraws-yE09V';
         const region = 'www';
         let allData = [];
-        let financeData = [];
         let currentFilter = 'all';
+        const geocodeCache = new Map();
 
-        // Biến lưu trữ biểu đồ
         let growthChart = null;
         let roleChart = null;
-        let statusChart = null;
         let feeChart = null;
-        let financeChart = null;
+        let map;
+        let markers = L.layerGroup();
 
-        // Màu sắc cho biểu đồ
+        const defaultCoords = {
+            'Thủ Dầu Một': [11.0005, 106.6577],
+            'Thuận An': [10.9316, 106.7127],
+            'Dĩ An': [10.9075, 106.7866],
+            'Bến Cát': [11.1527, 106.6072],
+            'Tân Uyên': [11.0237, 106.8120]
+        };
+
         const chartColors = {
             blue: ['rgba(54, 162, 235, 0.8)', 'rgba(54, 162, 235, 0.2)'],
             green: ['rgba(75, 192, 192, 0.8)', 'rgba(75, 192, 192, 0.2)'],
@@ -302,7 +253,6 @@
             red: ['rgba(255, 99, 132, 0.8)', 'rgba(255, 99, 132, 0.2)']
         };
 
-        // Style chung cho biểu đồ
         const commonOptions = {
             responsive: true,
             maintainAspectRatio: false,
@@ -334,7 +284,76 @@
             }
         };
 
-        // API Request Function
+        // Các hàm tiện ích
+        function normalizeAddress(address) {
+            const addresses = address.split(/(?=[0-9])/);
+            let normalizedAddress = addresses[0];
+
+            const cityMatch = normalizedAddress.match(/(TP\.|Thành phố|TX\.|Thị xã)\s*(Thủ Dầu Một|Thuận An|Dĩ An|Bến Cát|Tân Uyên)/i);
+            const wardMatch = normalizedAddress.match(/(P\.|Phường|X\.|Xã)\s*([^,]+)/i);
+
+            let result = '';
+
+            if (cityMatch) {
+                const cityName = cityMatch[2].trim();
+                result = cityName;
+            }
+
+            if (wardMatch) {
+                const wardName = wardMatch[2].trim();
+                result = `${wardName}, ${result}`;
+            }
+
+            result += ', Bình Dương, Việt Nam';
+
+            return address;
+        }
+
+        async function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function geocodeAddressWithRetry(address, retries = 3, delayMs = 1000) {
+            try {
+                const normalizedAddress = normalizeAddress(address);
+
+                if (geocodeCache.has(normalizedAddress)) {
+                    return geocodeCache.get(normalizedAddress);
+                }
+
+                for (const [city, coords] of Object.entries(defaultCoords)) {
+                    if (normalizedAddress.includes(city)) {
+                        geocodeCache.set(normalizedAddress, coords);
+                        return coords;
+                    }
+                }
+
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        await delay(delayMs);
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(normalizedAddress)}&limit=1`
+                        );
+                        const data = await response.json();
+
+                        if (data && data[0]) {
+                            const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                            geocodeCache.set(normalizedAddress, coords);
+                            return coords;
+                        }
+                    } catch (error) {
+                        console.error(`Lần thử ${i + 1} thất bại cho địa chỉ "${normalizedAddress}":`, error);
+                        if (i === retries - 1) break;
+                    }
+                }
+
+                return [10.9804, 106.6519];
+            } catch (error) {
+                console.error('Lỗi geocoding:', error);
+                return [10.9804, 106.6519];
+            }
+        }
+
         async function apiRequest(tableName, action, data) {
             const apiUrl = `https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`;
             try {
@@ -359,38 +378,19 @@
             }
         }
 
-        // Format Functions
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND'
-            }).format(amount);
+        function getAvailableMonths(memberData) {
+            function getLast12Months() {
+                const months = [];
+                const today = new Date();
+                for (let i = 0; i < 12; i++) {
+                    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                    months.unshift(`${d.getMonth() + 1}/${d.getFullYear()}`);
+                }
+                return months;
+            }
+            return getLast12Months();
         }
 
-        // Hàm lấy danh sách các tháng từ dữ liệu
-        function getAvailableMonths(memberData, financeData) {
-            const months = new Set();
-
-            // Lấy tháng từ dữ liệu hội viên
-            memberData.forEach(member => {
-                const date = new Date(member["Ngày tham gia hội"]);
-                months.add(`${date.getMonth() + 1}/${date.getFullYear()}`);
-            });
-
-            // Lấy tháng từ dữ liệu tài chính
-            financeData.forEach(item => {
-                const date = new Date(item["Ngày chứng từ"]);
-                months.add(`${date.getMonth() + 1}/${date.getFullYear()}`);
-            });
-
-            return Array.from(months).sort((a, b) => {
-                const [monthA, yearA] = a.split('/');
-                const [monthB, yearB] = b.split('/');
-                return new Date(yearB, monthB - 1) - new Date(yearA, monthA - 1);
-            });
-        }
-
-        // Hàm cập nhật select box tháng
         function updateMonthFilter(months) {
             const monthFilter = document.getElementById('monthFilter');
             monthFilter.innerHTML = '<option value="all">Tất cả thời gian</option>';
@@ -405,7 +405,6 @@
             });
         }
 
-        // Hàm lọc dữ liệu theo tháng
         function filterDataByMonth(data, month, dateField) {
             if (month === 'all') return data;
 
@@ -419,19 +418,15 @@
 
         async function fetchData() {
             try {
-                const [memberResponse, financeResponse] = await Promise.all([
-                    apiRequest('HV_NCC_KH', 'Find', { Selector: "Filter(HV_NCC_KH, true)" }),
-                    apiRequest('THU CHI TON QUY', 'Find', { Selector: "Filter([THU CHI TON QUY], true)" })
-                ]);
+                const memberResponse = await apiRequest('HV_NCC_KH', 'Find', {
+                    Selector: "Filter(HV_NCC_KH, true)"
+                });
 
                 allData = memberResponse;
-                financeData = financeResponse;
-
-                // Cập nhật danh sách tháng trong filter
-                const months = getAvailableMonths(allData, financeData);
+                const months = getAvailableMonths(allData);
                 updateMonthFilter(months);
 
-                return { members: allData, finance: financeData };
+                return { members: allData };
             } catch (error) {
                 console.error("Lỗi khi lấy dữ liệu:", error);
                 throw error;
@@ -439,75 +434,156 @@
         }
 
         function processGrowthData(data) {
+            function getLast12Months() {
+                const months = [];
+                const today = new Date();
+                for (let i = 0; i < 12; i++) {
+                    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                    months.unshift(`${d.getMonth() + 1}/${d.getFullYear()}`);
+                }
+                return months;
+            }
+
+            const last12Months = getLast12Months();
             const filteredData = currentFilter === 'all' ? data :
                 filterDataByMonth(data, currentFilter, "Ngày tham gia hội");
 
-            // Lọc chỉ lấy những hội viên active
             const activeMembers = filteredData.filter(member => member.Active === "active");
-
-            const monthlyData = activeMembers.reduce((acc, member) => {
-                const date = new Date(member["Ngày tham gia hội"]);
-                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-                acc[monthYear] = (acc[monthYear] || 0) + 1;
+            const monthlyData = last12Months.reduce((acc, month) => {
+                acc[month] = 0;
                 return acc;
             }, {});
 
-            // Sắp xếp theo thời gian
-            const sortedEntries = Object.entries(monthlyData).sort((a, b) => {
-                const [monthA, yearA] = a[0].split('/');
-                const [monthB, yearB] = b[0].split('/');
-                return new Date(yearA, monthA - 1) - new Date(yearB, monthB - 1);
+            activeMembers.forEach(member => {
+                const date = new Date(member["Ngày tham gia hội"]);
+                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+                if (monthlyData.hasOwnProperty(monthYear)) {
+                    monthlyData[monthYear]++;
+                }
             });
 
-            // Tính số lượng tích lũy
             let cumulative = 0;
-            const cumulativeData = sortedEntries.map(([month, count]) => {
+            const cumulativeData = Object.entries(monthlyData).map(([month, count]) => {
                 cumulative += count;
-                return { month, count: cumulative };
+                return {
+                    month,
+                    count: cumulative,
+                    monthlyCount: count
+                };
             });
+
+            const formatMonth = (monthYear) => {
+                const [month, year] = monthYear.split('/');
+                const date = new Date(year, month - 1);
+                return `T${month}/${year}`;
+            };
 
             return {
-                labels: cumulativeData.map(d => d.month),
-                data: cumulativeData.map(d => d.count)
+                labels: cumulativeData.map(d => formatMonth(d.month)),
+                data: cumulativeData.map(d => d.count),
+                monthlyData: cumulativeData.map(d => d.monthlyCount)
             };
         }
 
-        function renderMemberCharts() {
+        function initMap() {
+            map = L.map('map').setView([11.0005, 106.6577], 10);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            markers = L.layerGroup().addTo(map);
+        }
+
+        async function updateMap(filteredData) {
+            markers.clearLayers();
+
+            const activeMembers = filteredData.filter(member => member.Active === "active");
+
+            // Không group nữa, mỗi member sẽ có một marker riêng
+            for (const member of activeMembers) {
+                const address = member["Nơi ở hiện tại"] || "Không xác định";
+                const coords = await geocodeAddressWithRetry(address);
+
+                if (coords) {
+                    const marker = L.marker(coords, {
+                        icon: L.divIcon({
+                            className: 'cluster-marker',
+                            html: `<div style="
+                        width: 25px;
+                        height: 25px;
+                        background: #3388ff;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">1</div>`
+                        })
+                    });
+
+                    const popupContent = `
+                <div class="map-marker-info">
+                    <h3>${address}</h3>
+                    <p>Hội viên: ${member["Tên hội viên"]}</p>
+                </div>
+            `;
+
+                    marker.bindPopup(popupContent);
+                    markers.addLayer(marker);
+                }
+            }
+        }
+
+        async function renderCharts() {
             if (growthChart) growthChart.destroy();
             if (roleChart) roleChart.destroy();
-            if (statusChart) statusChart.destroy();
             if (feeChart) feeChart.destroy();
 
-            // Lọc dữ liệu theo tháng được chọn
             const filteredData = currentFilter === 'all' ? allData :
                 filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
 
+            // Growth Chart
             const growthData = processGrowthData(filteredData);
             const growthCtx = document.getElementById('growthChart').getContext('2d');
-
-            // Biểu đồ tăng trưởng
             growthChart = new Chart(growthCtx, {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: growthData.labels,
-                    datasets: [{
-                        label: 'Tổng số hội viên đang hoạt động',
-                        data: growthData.data,
-                        fill: true,
-                        backgroundColor: chartColors.blue[1],
-                        borderColor: chartColors.blue[0],
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: chartColors.blue[0]
-                    }]
+                    datasets: [
+                        {
+                            label: 'Số hội viên mới',
+                            data: growthData.monthlyData,
+                            backgroundColor: chartColors.blue[1],
+                            borderColor: chartColors.blue[0],
+                            borderWidth: 1,
+                            order: 2
+                        },
+                        {
+                            label: 'Tổng số hội viên',
+                            data: growthData.data,
+                            type: 'line',
+                            fill: false,
+                            borderColor: chartColors.green[0],
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: chartColors.green[0],
+                            tension: 0.4,
+                            order: 1
+                        }
+                    ]
                 },
                 options: {
                     ...commonOptions,
                     plugins: {
                         ...commonOptions.plugins,
                         title: {
+                            display: false
+                        },
+                        datalabels: {
                             display: false
                         }
                     },
@@ -528,13 +604,16 @@
                 }
             });
 
-            // Biểu đồ phân loại theo chức vụ với dữ liệu đã lọc
+            // Role Chart với cải tiến
             const roleData = filteredData.filter(member => member.Active === "active")
                 .reduce((acc, member) => {
-                    const role = member["Chức vụ (Hội)"];
+                    const role = member["Chức vụ (Hội)"] || "Không xác định";
                     acc[role] = (acc[role] || 0) + 1;
                     return acc;
                 }, {});
+
+            const totalMembers = Object.values(roleData).reduce((a, b) => a + b, 0);
+            document.getElementById('totalRoleMembers').textContent = totalMembers.toLocaleString();
 
             const roleCtx = document.getElementById('roleChart').getContext('2d');
             roleChart = new Chart(roleCtx, {
@@ -558,62 +637,74 @@
                     ...commonOptions,
                     cutout: '60%',
                     radius: '90%',
+                    layout: {
+                        padding: 20
+                    },
                     plugins: {
-                        ...commonOptions.plugins,
-                        title: {
-                            display: false
-                        },
                         legend: {
                             position: 'right',
-                            align: 'center'
+                            align: 'center',
+                            labels: {
+                                generateLabels: (chart) => {
+                                    const data = chart.data;
+                                    return data.labels.map((label, i) => {
+                                        const value = data.datasets[0].data[i];
+                                        const percentage = ((value / totalMembers) * 100).toFixed(1);
+                                        return {
+                                            text: `${label}: ${value.toLocaleString()} (${percentage}%)`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: isNaN(value),
+                                            index: i,
+                                            strokeStyle: '#fff',
+                                            lineWidth: 2
+                                        };
+                                    });
+                                },
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / totalMembers) * 100).toFixed(1);
+                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: (value) => {
+                                const percentage = ((value / totalMembers) * 100).toFixed(1);
+                                if (percentage > 5) {
+                                    return `${percentage}%`;
+                                }
+                                return '';
+                            }
                         }
                     }
                 }
             });
 
-            // Biểu đồ trạng thái hoạt động với dữ liệu đã lọc
-            const activeData = filteredData.reduce((acc, member) => {
-                const status = member.Active === "active" ? "Đang hoạt động" : "Không hoạt động";
-                acc[status] = (acc[status] || 0) + 1;
-                return acc;
-            }, {});
-
-            const statusCtx = document.getElementById('statusChart').getContext('2d');
-            statusChart = new Chart(statusCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(activeData),
-                    datasets: [{
-                        data: Object.values(activeData),
-                        backgroundColor: [chartColors.green[0], chartColors.red[0]],
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    ...commonOptions,
-                    cutout: '60%',
-                    radius: '90%',
-                    plugins: {
-                        ...commonOptions.plugins,
-                        title: {
-                            display: false
-                        },
-                        legend: {
-                            position: 'right',
-                            align: 'center'
-                        }
-                    }
-                }
-            });
-
-            // Biểu đồ trạng thái hội phí với dữ liệu đã lọc
+            // Fee Status Chart với cải tiến
             const feeData = filteredData.filter(member => member.Active === "active")
                 .reduce((acc, member) => {
-                    const status = member["Trạng thái hội phí"];
+                    const status = member["Trạng thái hội phí"] || "Chưa xác định";
                     acc[status] = (acc[status] || 0) + 1;
                     return acc;
                 }, {});
+
+            const totalFeeMembers = Object.values(feeData).reduce((a, b) => a + b, 0);
+            document.getElementById('totalFeeMembers').textContent = totalFeeMembers.toLocaleString();
 
             const feeCtx = document.getElementById('feeChart').getContext('2d');
             feeChart = new Chart(feeCtx, {
@@ -635,149 +726,78 @@
                     ...commonOptions,
                     cutout: '60%',
                     radius: '90%',
+                    layout: {
+                        padding: 20
+                    },
                     plugins: {
-                        ...commonOptions.plugins,
-                        title: {
-                            display: false
-                        },
                         legend: {
                             position: 'right',
-                            align: 'center'
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderFinanceChart() {
-            if (financeChart) financeChart.destroy();
-
-            // Lọc dữ liệu tài chính theo tháng được chọn
-            const filteredFinanceData = currentFilter === 'all' ? financeData :
-                filterDataByMonth(financeData, currentFilter, "Ngày chứng từ");
-
-            const monthlyData = filteredFinanceData.reduce((acc, item) => {
-                const date = new Date(item["Ngày chứng từ"]);
-                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
-
-                if (!acc[monthYear]) {
-                    acc[monthYear] = { thu: 0, chi: 0 };
-                }
-
-                const amount = Number(item["Số tiền"]) || 0;
-                if (item["Phân loại"] === "Thu") {
-                    acc[monthYear].thu += amount;
-                } else if (item["Phân loại"] === "Chi") {
-                    acc[monthYear].chi += amount;
-                }
-
-                return acc;
-            }, {});
-
-            const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
-                const [monthA, yearA] = a.split('/');
-                const [monthB, yearB] = b.split('/');
-                return new Date(yearA, monthA - 1) - new Date(yearB, monthB - 1);
-            });
-
-            const ctx = document.getElementById('financeChart').getContext('2d');
-            financeChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: sortedMonths,
-                    datasets: [
-                        {
-                            label: 'Thu',
-                            data: sortedMonths.map(month => monthlyData[month].thu),
-                            backgroundColor: chartColors.green[0],
-                            borderColor: chartColors.green[0],
-                            borderWidth: 1,
-                            borderRadius: 4
+                            align: 'center',
+                            labels: {
+                                generateLabels: (chart) => {
+                                    const data = chart.data;
+                                    return data.labels.map((label, i) => {
+                                        const value = data.datasets[0].data[i];
+                                        const percentage = ((value / totalFeeMembers) * 100).toFixed(1);
+                                        return {
+                                            text: `${label}: ${value.toLocaleString()} (${percentage}%)`,
+                                            fillStyle: data.datasets[0].backgroundColor[i],
+                                            hidden: isNaN(value),
+                                            index: i,
+                                            strokeStyle: '#fff',
+                                            lineWidth: 2
+                                        };
+                                    });
+                                },
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#333'
+                            }
                         },
-                        {
-                            label: 'Chi',
-                            data: sortedMonths.map(month => monthlyData[month].chi),
-                            backgroundColor: chartColors.red[0],
-                            borderColor: chartColors.red[0],
-                            borderWidth: 1,
-                            borderRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    ...commonOptions,
-                    plugins: {
-                        ...commonOptions.plugins,
-                        title: {
-                            display: false
-                        },
-                        legend: {
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)',
-                                drawBorder: false
-                            },
-                            ticks: {
-                                callback: function (value) {
-                                    return formatCurrency(value);
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / totalFeeMembers) * 100).toFixed(1);
+                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
                                 }
                             }
                         },
-                        x: {
-                            grid: {
-                                display: false
+                        datalabels: {
+                            color: '#fff',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            formatter: (value) => {
+                                const percentage = ((value / totalFeeMembers) * 100).toFixed(1);
+                                if (percentage > 5) {
+                                    return `${percentage}%`;
+                                }
+                                return '';
                             }
                         }
                     }
                 }
             });
+
+            // Update map
+            await updateMap(filteredData);
         }
 
-        function openTab(event, tabName) {
-            const tabContents = document.getElementsByClassName('tab-content');
-            for (let content of tabContents) {
-                content.style.display = 'none';
-                content.classList.remove('active');
-            }
-
-            const tabButtons = document.getElementsByClassName('tab-button');
-            for (let button of tabButtons) {
-                button.classList.remove('active');
-            }
-
-            const selectedTab = document.getElementById(tabName);
-            selectedTab.style.display = 'block';
-            selectedTab.classList.add('active');
-            event.currentTarget.classList.add('active');
-
-            if (tabName === 'members') {
-                renderMemberCharts();
-            } else if (tabName === 'finance') {
-                renderFinanceChart();
-            }
-        }
-
-        // Xử lý sự kiện thay đổi tháng
         document.getElementById('monthFilter').addEventListener('change', function (e) {
             currentFilter = e.target.value;
-            const activeTab = document.querySelector('.tab-content.active');
-
-            if (activeTab.id === 'members') {
-                renderMemberCharts();
-            } else if (activeTab.id === 'finance') {
-                renderFinanceChart();
-            }
+            renderCharts();
         });
 
         async function initializeDashboard() {
             try {
                 await fetchData();
-                renderMemberCharts();
+                initMap();
+                await renderCharts();
             } catch (error) {
                 console.error("Lỗi khởi tạo:", error);
                 document.querySelector('.dashboard').innerHTML =

@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Báo Cáo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            background-color: #f8fafc;
+            color: #1f2937;
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .dashboard {
+            padding: 1rem;
+            max-width: 1400px;
+            margin: 0.5rem auto;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+
+        /* Filter Styles */
+        .filter-container {
+            margin-bottom: 1.5rem;
+            background-color: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .filter-container {
+                flex-direction: row;
+                align-items: center;
+                padding: 1rem;
+                gap: 1rem;
+            }
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #4b5563;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background-color: white;
+            color: #1f2937;
+            font-size: 0.9rem;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em;
+            padding-right: 2rem;
+        }
+
+        @media (min-width: 640px) {
+            .filter-select {
+                width: auto;
+                min-width: 200px;
+            }
+        }
+
+        /* Tabs Section */
+        .tabs {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 1px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            white-space: nowrap;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+        @media (min-width: 640px) {
+            .tab-button {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        .tab-button.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        /* Chart Grid */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .chart-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            height: 300px;
+        }
+
+        @media (min-width: 640px) {
+            .chart-container {
+                height: 350px;
+                padding: 1.25rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+                padding: 1.5rem;
+            }
+        }
+
+        .chart-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 0.75rem;
+            color: #1f2937;
+            font-size: 0.875rem;
+            padding: 0 0.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .chart-title {
+                font-size: 1rem;
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Status Messages */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .error {
+            color: #ef4444;
+            padding: 1rem;
+            text-align: center;
+            background-color: #fef2f2;
+            border-radius: 8px;
+            border: 1px solid #fee2e2;
+            margin: 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* Chart Responsive Fixes */
+        canvas {
+            width: 100% !important;
+            max-height: 100% !important;
+        }
+
+        /* Tab Content Animation */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Filter Section -->
+        <div class="filter-container">
+            <label class="filter-label" for="monthFilter">Xem theo tháng:</label>
+            <select id="monthFilter" class="filter-select">
+                <option value="all">Tất cả thời gian</option>
+            </select>
+        </div>
+
+        <!-- Tabs Section -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'members')">Thống Kê Hội Viên</button>
+            <button class="tab-button" onclick="openTab(event, 'finance')">Thống Kê Tài Chính</button>
+        </div>
+
+        <!-- Content Sections -->
+        <div id="members" class="tab-content active">
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-title">TĂNG TRƯỞNG HỘI VIÊN THEO THỜI GIAN</div>
+                    <canvas id="growthChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">PHÂN BỐ HỘI VIÊN THEO CHỨC VỤ</div>
+                    <canvas id="roleChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">TRẠNG THÁI HOẠT ĐỘNG CỦA HỘI VIÊN</div>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">TRẠNG THÁI ĐÓNG HỘI PHÍ</div>
+                    <canvas id="feeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="finance" class="tab-content">
+            <div class="chart-container">
+                <div class="chart-title">THỐNG KÊ THU CHI THEO THÁNG</div>
+                <canvas id="financeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const appId = 'd9ee17ac-4397-452d-9e74-97997607fa4b';
+        const accessKey = 'V2-Rovhm-ZiLxx-msd7k-TSoig-NkECL-5LXEq-Kraws-yE09V';
+        const region = 'www';
+        let allData = [];
+        let financeData = [];
+        let currentFilter = 'all';
+
+        // Biến lưu trữ biểu đồ
+        let growthChart = null;
+        let roleChart = null;
+        let statusChart = null;
+        let feeChart = null;
+        let financeChart = null;
+
+        // Màu sắc cho biểu đồ
+        const chartColors = {
+            blue: ['rgba(54, 162, 235, 0.8)', 'rgba(54, 162, 235, 0.2)'],
+            green: ['rgba(75, 192, 192, 0.8)', 'rgba(75, 192, 192, 0.2)'],
+            orange: ['rgba(255, 159, 64, 0.8)', 'rgba(255, 159, 64, 0.2)'],
+            purple: ['rgba(153, 102, 255, 0.8)', 'rgba(153, 102, 255, 0.2)'],
+            red: ['rgba(255, 99, 132, 0.8)', 'rgba(255, 99, 132, 0.2)']
+        };
+
+        // Style chung cho biểu đồ
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        font: {
+                            family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                            size: 13
+                        },
+                        padding: 20
+                    }
+                },
+                title: {
+                    font: {
+                        family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        top: 10,
+                        bottom: 20
+                    }
+                }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeInOutQuart'
+            }
+        };
+
+        // API Request Function
+        async function apiRequest(tableName, action, data) {
+            const apiUrl = `https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`;
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'ApplicationAccessKey': accessKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        Action: action,
+                        Properties: {},
+                        ...data
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error("Lỗi API:", error);
+                throw error;
+            }
+        }
+
+        // Format Functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        // Hàm lấy danh sách các tháng từ dữ liệu
+        function getAvailableMonths(memberData, financeData) {
+            const months = new Set();
+
+            // Lấy tháng từ dữ liệu hội viên
+            memberData.forEach(member => {
+                const date = new Date(member["Ngày tham gia hội"]);
+                months.add(`${date.getMonth() + 1}/${date.getFullYear()}`);
+            });
+
+            // Lấy tháng từ dữ liệu tài chính
+            financeData.forEach(item => {
+                const date = new Date(item["Ngày chứng từ"]);
+                months.add(`${date.getMonth() + 1}/${date.getFullYear()}`);
+            });
+
+            return Array.from(months).sort((a, b) => {
+                const [monthA, yearA] = a.split('/');
+                const [monthB, yearB] = b.split('/');
+                return new Date(yearB, monthB - 1) - new Date(yearA, monthA - 1);
+            });
+        }
+
+        // Hàm cập nhật select box tháng
+        function updateMonthFilter(months) {
+            const monthFilter = document.getElementById('monthFilter');
+            monthFilter.innerHTML = '<option value="all">Tất cả thời gian</option>';
+
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month;
+                const [month_num, year] = month.split('/');
+                const monthName = new Date(year, month_num - 1).toLocaleString('vi-VN', { month: 'long' });
+                option.textContent = `${monthName} ${year}`;
+                monthFilter.appendChild(option);
+            });
+        }
+
+        // Hàm lọc dữ liệu theo tháng
+        function filterDataByMonth(data, month, dateField) {
+            if (month === 'all') return data;
+
+            const [filterMonth, filterYear] = month.split('/');
+            return data.filter(item => {
+                const date = new Date(item[dateField]);
+                return (date.getMonth() + 1) === parseInt(filterMonth) &&
+                    date.getFullYear() === parseInt(filterYear);
+            });
+        }
+
+        async function fetchData() {
+            try {
+                const [memberResponse, financeResponse] = await Promise.all([
+                    apiRequest('HV_NCC_KH', 'Find', { Selector: "Filter(HV_NCC_KH, true)" }),
+                    apiRequest('THU CHI TON QUY', 'Find', { Selector: "Filter([THU CHI TON QUY], true)" })
+                ]);
+
+                allData = memberResponse;
+                financeData = financeResponse;
+
+                // Cập nhật danh sách tháng trong filter
+                const months = getAvailableMonths(allData, financeData);
+                updateMonthFilter(months);
+
+                return { members: allData, finance: financeData };
+            } catch (error) {
+                console.error("Lỗi khi lấy dữ liệu:", error);
+                throw error;
+            }
+        }
+
+        function processGrowthData(data) {
+            const filteredData = currentFilter === 'all' ? data :
+                filterDataByMonth(data, currentFilter, "Ngày tham gia hội");
+
+            // Lọc chỉ lấy những hội viên active
+            const activeMembers = filteredData.filter(member => member.Active === "active");
+
+            const monthlyData = activeMembers.reduce((acc, member) => {
+                const date = new Date(member["Ngày tham gia hội"]);
+                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+                acc[monthYear] = (acc[monthYear] || 0) + 1;
+                return acc;
+            }, {});
+
+            // Sắp xếp theo thời gian
+            const sortedEntries = Object.entries(monthlyData).sort((a, b) => {
+                const [monthA, yearA] = a[0].split('/');
+                const [monthB, yearB] = b[0].split('/');
+                return new Date(yearA, monthA - 1) - new Date(yearB, monthB - 1);
+            });
+
+            // Tính số lượng tích lũy
+            let cumulative = 0;
+            const cumulativeData = sortedEntries.map(([month, count]) => {
+                cumulative += count;
+                return { month, count: cumulative };
+            });
+
+            return {
+                labels: cumulativeData.map(d => d.month),
+                data: cumulativeData.map(d => d.count)
+            };
+        }
+
+        function renderMemberCharts() {
+            if (growthChart) growthChart.destroy();
+            if (roleChart) roleChart.destroy();
+            if (statusChart) statusChart.destroy();
+            if (feeChart) feeChart.destroy();
+
+            // Lọc dữ liệu theo tháng được chọn
+            const filteredData = currentFilter === 'all' ? allData :
+                filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
+
+            const growthData = processGrowthData(filteredData);
+            const growthCtx = document.getElementById('growthChart').getContext('2d');
+
+            // Biểu đồ tăng trưởng
+            growthChart = new Chart(growthCtx, {
+                type: 'line',
+                data: {
+                    labels: growthData.labels,
+                    datasets: [{
+                        label: 'Tổng số hội viên đang hoạt động',
+                        data: growthData.data,
+                        fill: true,
+                        backgroundColor: chartColors.blue[1],
+                        borderColor: chartColors.blue[0],
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: chartColors.blue[0]
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Biểu đồ phân loại theo chức vụ với dữ liệu đã lọc
+            const roleData = filteredData.filter(member => member.Active === "active")
+                .reduce((acc, member) => {
+                    const role = member["Chức vụ (Hội)"];
+                    acc[role] = (acc[role] || 0) + 1;
+                    return acc;
+                }, {});
+
+            const roleCtx = document.getElementById('roleChart').getContext('2d');
+            roleChart = new Chart(roleCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(roleData),
+                    datasets: [{
+                        data: Object.values(roleData),
+                        backgroundColor: [
+                            chartColors.blue[0],
+                            chartColors.green[0],
+                            chartColors.orange[0],
+                            chartColors.purple[0],
+                            chartColors.red[0]
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    cutout: '60%',
+                    radius: '90%',
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            position: 'right',
+                            align: 'center'
+                        }
+                    }
+                }
+            });
+
+            // Biểu đồ trạng thái hoạt động với dữ liệu đã lọc
+            const activeData = filteredData.reduce((acc, member) => {
+                const status = member.Active === "active" ? "Đang hoạt động" : "Không hoạt động";
+                acc[status] = (acc[status] || 0) + 1;
+                return acc;
+            }, {});
+
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(activeData),
+                    datasets: [{
+                        data: Object.values(activeData),
+                        backgroundColor: [chartColors.green[0], chartColors.red[0]],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    cutout: '60%',
+                    radius: '90%',
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            position: 'right',
+                            align: 'center'
+                        }
+                    }
+                }
+            });
+
+            // Biểu đồ trạng thái hội phí với dữ liệu đã lọc
+            const feeData = filteredData.filter(member => member.Active === "active")
+                .reduce((acc, member) => {
+                    const status = member["Trạng thái hội phí"];
+                    acc[status] = (acc[status] || 0) + 1;
+                    return acc;
+                }, {});
+
+            const feeCtx = document.getElementById('feeChart').getContext('2d');
+            feeChart = new Chart(feeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(feeData),
+                    datasets: [{
+                        data: Object.values(feeData),
+                        backgroundColor: [
+                            chartColors.green[0],
+                            chartColors.orange[0],
+                            chartColors.red[0]
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    cutout: '60%',
+                    radius: '90%',
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            position: 'right',
+                            align: 'center'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderFinanceChart() {
+            if (financeChart) financeChart.destroy();
+
+            // Lọc dữ liệu tài chính theo tháng được chọn
+            const filteredFinanceData = currentFilter === 'all' ? financeData :
+                filterDataByMonth(financeData, currentFilter, "Ngày chứng từ");
+
+            const monthlyData = filteredFinanceData.reduce((acc, item) => {
+                const date = new Date(item["Ngày chứng từ"]);
+                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+
+                if (!acc[monthYear]) {
+                    acc[monthYear] = { thu: 0, chi: 0 };
+                }
+
+                const amount = Number(item["Số tiền"]) || 0;
+                if (item["Phân loại"] === "Thu") {
+                    acc[monthYear].thu += amount;
+                } else if (item["Phân loại"] === "Chi") {
+                    acc[monthYear].chi += amount;
+                }
+
+                return acc;
+            }, {});
+
+            const sortedMonths = Object.keys(monthlyData).sort((a, b) => {
+                const [monthA, yearA] = a.split('/');
+                const [monthB, yearB] = b.split('/');
+                return new Date(yearA, monthA - 1) - new Date(yearB, monthB - 1);
+            });
+
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            financeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths,
+                    datasets: [
+                        {
+                            label: 'Thu',
+                            data: sortedMonths.map(month => monthlyData[month].thu),
+                            backgroundColor: chartColors.green[0],
+                            borderColor: chartColors.green[0],
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Chi',
+                            data: sortedMonths.map(month => monthlyData[month].chi),
+                            backgroundColor: chartColors.red[0],
+                            borderColor: chartColors.red[0],
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function (value) {
+                                    return formatCurrency(value);
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function openTab(event, tabName) {
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let content of tabContents) {
+                content.style.display = 'none';
+                content.classList.remove('active');
+            }
+
+            const tabButtons = document.getElementsByClassName('tab-button');
+            for (let button of tabButtons) {
+                button.classList.remove('active');
+            }
+
+            const selectedTab = document.getElementById(tabName);
+            selectedTab.style.display = 'block';
+            selectedTab.classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            if (tabName === 'members') {
+                renderMemberCharts();
+            } else if (tabName === 'finance') {
+                renderFinanceChart();
+            }
+        }
+
+        // Xử lý sự kiện thay đổi tháng
+        document.getElementById('monthFilter').addEventListener('change', function (e) {
+            currentFilter = e.target.value;
+            const activeTab = document.querySelector('.tab-content.active');
+
+            if (activeTab.id === 'members') {
+                renderMemberCharts();
+            } else if (activeTab.id === 'finance') {
+                renderFinanceChart();
+            }
+        });
+
+        async function initializeDashboard() {
+            try {
+                await fetchData();
+                renderMemberCharts();
+            } catch (error) {
+                console.error("Lỗi khởi tạo:", error);
+                document.querySelector('.dashboard').innerHTML =
+                    '<div class="error">Không thể tải dữ liệu. Vui lòng thử lại sau.</div>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+    </script>
+</body>
+
+</html>
