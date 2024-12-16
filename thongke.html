@@ -49,9 +49,41 @@
             .filter-container {
                 flex-direction: row;
                 align-items: center;
+                justify-content: space-between;
+                /* Thêm justify-content */
                 padding: 1rem;
                 gap: 1rem;
             }
+
+            .filter-group {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+        }
+
+        /* Style cho nút mới */
+        .nav-button {
+            background-color: #3B82F6;
+            color: white;
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+            height: 38px;
+            /* Khớp với chiều cao của select */
+        }
+
+        .nav-button:hover {
+            background-color: #2563EB;
+        }
+
+        .nav-button:active {
+            transform: translateY(1px);
         }
 
         .filter-label {
@@ -186,10 +218,15 @@
 <body>
     <div class="dashboard">
         <div class="filter-container">
-            <label class="filter-label" for="monthFilter">Xem theo tháng:</label>
-            <select id="monthFilter" class="filter-select">
-                <option value="all">Tất cả thời gian</option>
-            </select>
+            <div class="filter-group">
+                <label class="filter-label" for="monthFilter">Xem theo tháng:</label>
+                <select id="monthFilter" class="filter-select">
+                    <option value="all">Tất cả thời gian</option>
+                </select>
+            </div>
+            <button class="nav-button" onclick="window.location.href='https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/thuchitonquy.html'">
+                Thu chi
+            </button>
         </div>
 
         <div id="members" class="chart-grid">
