@@ -757,13 +757,12 @@
 
             // Chuẩn bị dữ liệu để xuất
             const headers = [
-                "STT", "Mã hội viên", "Tên hội viên", "Giới tính", "Ngày tham gia hội",
+                "STT", "Tên hội viên", "Giới tính", "Ngày tham gia hội",
                 "Nơi ở hiện tại", "Số điện thoại", "Trạng thái hội phí", "Ngày đóng hội phí"
             ];
 
             const rows = activeMembers.map((member, index) => [
                 index + 1,
-                member["Mã hội viên"] || "",
                 member["Tên hội viên"] || "",
                 member["Giới tính"] || "",
                 new Date(member["Ngày tham gia hội"]).toLocaleDateString('vi-VN'),
