@@ -10,6 +10,8 @@
         src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -212,6 +214,33 @@
             border-radius: 4px;
             font-size: 12px;
         }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .filter-container {
+            margin-bottom: 1.5rem;
+            background-color: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .filter-container {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 1rem;
+                gap: 1rem;
+            }
+        }
     </style>
 </head>
 
@@ -224,9 +253,15 @@
                     <option value="all">Tất cả thời gian</option>
                 </select>
             </div>
-            <button class="nav-button" onclick="window.location.href='https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/thuchitonquy.html'">
-                Thu chi
-            </button>
+            <div class="filter-group">
+                <button class="nav-button" onclick="exportMemberList()">
+                    Xuất danh sách
+                </button>
+                <button class="nav-button"
+                    onclick="window.location.href='https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/thuchitonquy.html'">
+                    Thu chi
+                </button>
+            </div>
         </div>
 
         <div id="members" class="chart-grid">
@@ -709,6 +744,52 @@
                 labels: sortedStats.map(([city]) => city),
                 data: sortedStats.map(([, count]) => count)
             };
+        }
+
+        // Thêm function để xuất danh sách hội viên ra file Excel
+        function exportMemberList() {
+            // Lọc data theo filter hiện tại
+            const filteredData = currentFilter === 'all' ? allData :
+                filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
+
+            // Lọc chỉ lấy hội viên đang hoạt động
+            const activeMembers = filteredData.filter(member => member.Active === "active");
+
+            // Chuẩn bị dữ liệu để xuất
+            const headers = [
+                "STT", "Mã hội viên", "Tên hội viên", "Giới tính", "Ngày tham gia hội",
+                "Nơi ở hiện tại", "Số điện thoại", "Trạng thái hội phí", "Ngày đóng hội phí"
+            ];
+
+            const rows = activeMembers.map((member, index) => [
+                index + 1,
+                member["Mã hội viên"] || "",
+                member["Tên hội viên"] || "",
+                member["Giới tính"] || "",
+                new Date(member["Ngày tham gia hội"]).toLocaleDateString('vi-VN'),
+                member["Nơi ở hiện tại"] || "",
+                member["Điện thoại hội viên"] || "",
+                member["Trạng thái hội phí"] || "",
+                member["Ngày đóng hội phí mới"] ? new Date(member["Ngày đóng hội phí mới"]).toLocaleDateString('vi-VN') : ""
+            ]);
+
+            // Tạo workbook và worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+            // Thiết lập độ rộng cột
+            const colWidths = [5, 15, 30, 15, 40, 15, 20];
+            ws['!cols'] = colWidths.map(width => ({ width }));
+
+            // Thêm worksheet vào workbook
+            XLSX.utils.book_append_sheet(wb, ws, "Danh sách hội viên");
+
+            // Tạo tên file với thời gian hiện tại
+            const now = new Date();
+            const fileName = `Danh_sach_hoi_vien_${now.getDate()}_${now.getMonth() + 1}_${now.getFullYear()}.xlsx`;
+
+            // Xuất file
+            XLSX.writeFile(wb, fileName);
         }
 
 
