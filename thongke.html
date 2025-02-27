@@ -757,7 +757,7 @@
 
             // Chuẩn bị dữ liệu để xuất
             const headers = [
-                "STT", "Tên hội viên", "Giới tính", "Ngày tham gia hội",
+                "STT", "Tên hội viên", "Giới tính", "Trình PKB", "Ngày tham gia hội",
                 "Nơi ở hiện tại", "Số điện thoại", "Trạng thái hội phí", "Ngày đóng hội phí"
             ];
 
@@ -765,6 +765,7 @@
                 index + 1,
                 member["Tên hội viên"] || "",
                 member["Giới tính"] || "",
+                member["Trình PKB"] || "",
                 new Date(member["Ngày tham gia hội"]).toLocaleDateString('vi-VN'),
                 member["Nơi ở hiện tại"] || "",
                 member["Điện thoại hội viên"] || "",
