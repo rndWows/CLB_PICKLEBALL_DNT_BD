@@ -270,7 +270,7 @@
                 <canvas id="growthChart"></canvas>
             </div>
             <div class="chart-container">
-                <div class="chart-title">TRẠNG THÁI ĐÓNG HỘI PHÍ</div>
+                <div class="chart-title">TRẠNG THÁI ĐÓNG HỘI PHÍ THEO PHÂN LOẠI HỘI VIÊN</div>
                 <canvas id="feeChart"></canvas>
                 <div class="total-stats">
                     <div class="total-number" id="totalFeeMembers">0</div>
@@ -660,6 +660,7 @@
 
         function processCityStats(data) {
             const cityStats = new Map();
+            let otherCitiesCount = 0; // Biến đếm cho "Tỉnh thành khác"
 
             // Định nghĩa các alias (tên gọi khác) cho các thành phố
             const cityAliases = {
@@ -733,8 +734,16 @@
                         cityStats.set(foundCity, 0);
                     }
                     cityStats.set(foundCity, cityStats.get(foundCity) + 1);
+                } else {
+                    // Nếu không xác định được thành phố, tính vào "Tỉnh thành khác"
+                    otherCitiesCount++;
                 }
             });
+
+            // Thêm "Tỉnh thành khác" vào thống kê nếu có
+            if (otherCitiesCount > 0) {
+                cityStats.set("Tỉnh thành khác", otherCitiesCount);
+            }
 
             // Sắp xếp theo số lượng giảm dần
             const sortedStats = Array.from(cityStats.entries())
@@ -862,73 +871,76 @@
             });
 
             // Fee Status Chart với cải tiến
-            const feeData = filteredData.filter(member => member.Active === "active")
-                .reduce((acc, member) => {
-                    const status = member["Trạng thái hội phí"] || "Chưa xác định";
-                    acc[status] = (acc[status] || 0) + 1;
-                    return acc;
-                }, {});
+            // Chỉnh sửa phần xử lý dữ liệu cho biểu đồ TRẠNG THÁI ĐÓNG HỘI PHÍ
+            const feeData = {
+                'DNT BD': {},
+                'HV ngoài': {}
+            };
 
-            const totalFeeMembers = Object.values(feeData).reduce((a, b) => a + b, 0);
+            filteredData.filter(member => member.Active === "active").forEach(member => {
+                const status = member["Trạng thái hội phí"] || "Chưa xác định";
+                const type = member["Loại Hội Viên"] || "Khác";
+
+                // Phân loại hội viên theo Loại Hội Viên
+                const memberType = type === "DNT BD" ? "DNT BD" :
+                    (type === "HV ngoài" ? "HV ngoài" : "Khác");
+
+                if (!feeData[memberType]) {
+                    feeData[memberType] = {};
+                }
+
+                if (!feeData[memberType][status]) {
+                    feeData[memberType][status] = 0;
+                }
+
+                feeData[memberType][status]++;
+            });
+
+            const totalFeeMembers = filteredData.filter(member => member.Active === "active").length;
             document.getElementById('totalFeeMembers').textContent = totalFeeMembers.toLocaleString();
+
+            // Chuẩn bị dữ liệu cho biểu đồ
+            const feeDatasets = [];
+            const colors = [
+                [chartColors.green[0], chartColors.green[1]],
+                [chartColors.blue[0], chartColors.blue[1]],
+                [chartColors.orange[0], chartColors.orange[1]]
+            ];
+
+            let index = 0;
+            for (const [memberType, statuses] of Object.entries(feeData)) {
+                if (Object.keys(statuses).length > 0) { // Chỉ thêm dataset nếu có dữ liệu
+                    feeDatasets.push({
+                        label: memberType,
+                        data: Object.values(statuses),
+                        backgroundColor: colors[index % colors.length][0],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    });
+                    index++;
+                }
+            }
+
+            const feeLabels = Array.from(new Set(
+                Object.values(feeData).flatMap(statuses => Object.keys(statuses))
+            ));
 
             const feeCtx = document.getElementById('feeChart').getContext('2d');
             feeChart = new Chart(feeCtx, {
-                type: 'doughnut',
+                type: 'bar',  // Đổi từ doughnut sang bar để dễ thấy phân nhóm
                 data: {
-                    labels: Object.keys(feeData),
-                    datasets: [{
-                        data: Object.values(feeData),
-                        backgroundColor: [
-                            chartColors.green[0],
-                            chartColors.orange[0],
-                            chartColors.red[0]
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
+                    labels: feeLabels,
+                    datasets: feeDatasets
                 },
                 options: {
                     ...commonOptions,
-                    cutout: '60%',
-                    radius: '90%',
-                    layout: {
-                        padding: 20
-                    },
                     plugins: {
+                        ...commonOptions.plugins,
                         legend: {
-                            position: 'right',
-                            align: 'center',
+                            position: 'top',
                             labels: {
-                                generateLabels: (chart) => {
-                                    const data = chart.data;
-                                    return data.labels.map((label, i) => {
-                                        const value = data.datasets[0].data[i];
-                                        const percentage = ((value / totalFeeMembers) * 100).toFixed(1);
-                                        return {
-                                            text: `${label}: ${value.toLocaleString()} (${percentage}%)`,
-                                            fillStyle: data.datasets[0].backgroundColor[i],
-                                            hidden: isNaN(value),
-                                            index: i,
-                                            strokeStyle: '#fff',
-                                            lineWidth: 2
-                                        };
-                                    });
-                                },
-                                padding: 15,
                                 font: {
-                                    size: 12,
-                                    weight: 'bold'
-                                },
-                                color: '#333'
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const value = context.raw;
-                                    const percentage = ((value / totalFeeMembers) * 100).toFixed(1);
-                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
+                                    size: 12
                                 }
                             }
                         },
@@ -940,10 +952,23 @@
                             },
                             formatter: (value) => {
                                 const percentage = ((value / totalFeeMembers) * 100).toFixed(1);
-                                if (percentage > 5) {
-                                    return `${percentage}%`;
+                                if (percentage > 3) {
+                                    return `${value}\n(${percentage}%)`;
                                 }
                                 return '';
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
                             }
                         }
                     }
@@ -951,8 +976,27 @@
             });
 
             // Thêm City Stats Chart
+            // Thêm City Stats Chart
             const cityStats = processCityStats(filteredData);
             const cityStatsCtx = document.getElementById('cityStatsChart').getContext('2d');
+
+            // Tạo mảng màu riêng cho từng thành phố
+            const cityColors = [
+                'rgba(54, 162, 235, 0.8)',  // Xanh dương
+                'rgba(75, 192, 192, 0.8)',  // Xanh lá
+                'rgba(255, 159, 64, 0.8)',  // Cam
+                'rgba(153, 102, 255, 0.8)', // Tím
+                'rgba(255, 99, 132, 0.8)',  // Hồng
+                'rgba(255, 205, 86, 0.8)',  // Vàng
+                'rgba(201, 203, 207, 0.8)', // Xám
+                'rgba(54, 72, 152, 0.8)'    // Xanh đậm
+            ];
+
+            // Đảm bảo có đủ màu cho tất cả các thành phố
+            const backgroundColors = cityStats.labels.map(
+                (_, index) => cityColors[index % cityColors.length]
+            );
+
             cityStatsChart = new Chart(cityStatsCtx, {
                 type: 'bar',
                 data: {
@@ -960,8 +1004,8 @@
                     datasets: [{
                         label: 'Số hội viên',
                         data: cityStats.data,
-                        backgroundColor: chartColors.blue[0],
-                        borderColor: chartColors.blue[1],
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace('0.8', '1')),
                         borderWidth: 1
                     }]
                 },
@@ -978,17 +1022,23 @@
                             align: 'right',
                             color: '#333',
                             font: {
-                                weight: 'bold'
+                                weight: 'bold',
+                                size: 14 // Tăng kích thước font
                             },
-                            formatter: (value) => value.toLocaleString()
+                            formatter: (value) => value.toLocaleString(),
+                            display: true,
+                            offset: 4, // Thêm offset để đẩy nhãn ra xa hơn
+                            clamp: true // Đảm bảo nhãn không bị cắt
                         }
+
                     },
                     scales: {
                         x: {
                             beginAtZero: true,
                             grid: {
                                 display: false
-                            }
+                            },
+                            suggestedMax: 35 // Tăng giá trị tối đa trên trục x
                         },
                         y: {
                             grid: {
