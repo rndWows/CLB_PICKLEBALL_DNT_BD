@@ -270,7 +270,7 @@
                 <canvas id="growthChart"></canvas>
             </div>
             <div class="chart-container">
-                <div class="chart-title">TRẠNG THÁI ĐÓNG HỘI PHÍ THEO PHÂN LOẠI HỘI VIÊN</div>
+                <div class="chart-title">TỶ LỆ HỘI VIÊN</div>
                 <canvas id="feeChart"></canvas>
                 <div class="total-stats">
                     <div class="total-number" id="totalFeeMembers">0</div>
@@ -925,53 +925,70 @@
                 Object.values(feeData).flatMap(statuses => Object.keys(statuses))
             ));
 
+            // Tạo biểu đồ tròn đơn giản cho phân loại hội viên
             const feeCtx = document.getElementById('feeChart').getContext('2d');
+
+            // Tính tổng số lượng của mỗi loại hội viên
+            const memberTypeCounts = {};
+            filteredData.filter(member => member.Active === "active").forEach(member => {
+                const type = member["Loại Hội Viên"] || "Khác";
+                // Đơn giản hóa phân loại 
+                const memberType = type === "DNT BD" ? "DNT BD" :
+                    (type === "HV ngoài" ? "HV ngoài" : "Khác");
+
+                if (!memberTypeCounts[memberType]) {
+                    memberTypeCounts[memberType] = 0;
+                }
+                memberTypeCounts[memberType]++;
+            });
+
+            // Chuẩn bị dữ liệu cho biểu đồ tròn
+            const memberTypeLabels = Object.keys(memberTypeCounts);
+            const memberTypeData = Object.values(memberTypeCounts);
+
+            // Mảng màu cho các loại hội viên
+            const memberTypeColors = [
+                'rgba(54, 162, 235, 0.8)',  // HV ngoài - Xanh dương
+                'rgba(75, 192, 192, 0.8)',  // DNT BD - Xanh lá
+                'rgba(255, 159, 64, 0.8)'   // Khác - Cam
+            ];
+
             feeChart = new Chart(feeCtx, {
-                type: 'bar',  // Đổi từ doughnut sang bar để dễ thấy phân nhóm
+                type: 'doughnut',  // hoặc 'pie' nếu bạn muốn biểu đồ tròn đặc
                 data: {
-                    labels: feeLabels,
-                    datasets: feeDatasets
+                    labels: memberTypeLabels,
+                    datasets: [{
+                        data: memberTypeData,
+                        backgroundColor: memberTypeColors,
+                        borderColor: memberTypeColors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 2
+                    }]
                 },
                 options: {
                     ...commonOptions,
+                    maintainAspectRatio: false,
                     plugins: {
                         ...commonOptions.plugins,
                         legend: {
                             position: 'top',
                             labels: {
-                                font: {
-                                    size: 12
-                                }
+                                font: { size: 13 }
                             }
                         },
                         datalabels: {
                             color: '#fff',
                             font: {
                                 weight: 'bold',
-                                size: 12
+                                size: 14
                             },
-                            formatter: (value) => {
-                                const percentage = ((value / totalFeeMembers) * 100).toFixed(1);
-                                if (percentage > 3) {
-                                    return `${value}\n(${percentage}%)`;
-                                }
-                                return '';
+                            formatter: (value, ctx) => {
+                                const total = ctx.dataset.data.reduce((acc, val) => acc + val, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${value}\n(${percentage}%)`;
                             }
                         }
                     },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        }
-                    }
+                    cutout: '40%'  // Xóa dòng này nếu bạn muốn biểu đồ tròn đặc
                 }
             });
 
