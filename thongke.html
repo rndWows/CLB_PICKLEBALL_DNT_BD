@@ -282,6 +282,10 @@
                 <canvas id="cityStatsChart"></canvas>
             </div>
             <div class="chart-container">
+                <div class="chart-title">PHÂN BỐ THEO TRÌNH ĐỘ PICKLEBALL</div>
+                <canvas id="pkbLevelChart"></canvas>
+            </div>
+            <div class="chart-container">
                 <div class="chart-title">BẢN ĐỒ PHÂN BỐ HỘI VIÊN</div>
                 <div id="map"></div>
             </div>
@@ -803,10 +807,56 @@
         }
 
 
+        function processSkillLevelData(data) {
+            const levelStats = new Map();
+
+            data.filter(member => member.Active === "active").forEach(member => {
+                const level = member["Trình PKB"] || "Chưa xác định";
+                if (!levelStats.has(level)) {
+                    levelStats.set(level, 0);
+                }
+                levelStats.set(level, levelStats.get(level) + 1);
+            });
+
+            // Sắp xếp theo cấp độ
+            const sortOrder = ["Beginner", "Intermediate", "Advanced", "Pro"];
+            const sortedStats = Array.from(levelStats.entries())
+                .sort((a, b) => {
+                    const indexA = sortOrder.indexOf(a[0]);
+                    const indexB = sortOrder.indexOf(b[0]);
+
+                    // Nếu cả hai đều có trong sortOrder
+                    if (indexA >= 0 && indexB >= 0) {
+                        return indexA - indexB;
+                    }
+                    // Nếu chỉ a có trong sortOrder
+                    else if (indexA >= 0) {
+                        return -1;
+                    }
+                    // Nếu chỉ b có trong sortOrder
+                    else if (indexB >= 0) {
+                        return 1;
+                    }
+                    // Nếu cả hai không có trong sortOrder, sắp xếp theo số lượng giảm dần
+                    else {
+                        return b[1] - a[1];
+                    }
+                });
+
+            return {
+                labels: sortedStats.map(([level]) => level),
+                data: sortedStats.map(([, count]) => count)
+            };
+        }
+
+        let pkbLevelChart = null;
+
+        // Thêm biểu đồ mới vào hàm renderCharts
         async function renderCharts() {
             if (growthChart) growthChart.destroy();
             if (feeChart) feeChart.destroy();
             if (cityStatsChart) cityStatsChart.destroy();
+            if (pkbLevelChart) pkbLevelChart.destroy();
 
             const filteredData = currentFilter === 'all' ? allData :
                 filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
@@ -1065,6 +1115,76 @@
                     }
                 }
             });
+
+            // Thêm biểu đồ Trình PKB
+    const pkbLevelStats = processSkillLevelData(filteredData);
+    const pkbLevelCtx = document.getElementById('pkbLevelChart').getContext('2d');
+    
+    // Tạo mảng màu riêng cho từng cấp độ
+    const levelColors = [
+        'rgba(75, 192, 192, 0.8)',   // Beginner - Xanh lá
+        'rgba(54, 162, 235, 0.8)',   // Intermediate - Xanh dương
+        'rgba(255, 159, 64, 0.8)',   // Advanced - Cam
+        'rgba(153, 102, 255, 0.8)',  // Pro - Tím
+        'rgba(201, 203, 207, 0.8)'   // Chưa xác định - Xám
+    ];
+    
+    // Đảm bảo có đủ màu cho tất cả các cấp độ
+    const backgroundColors1 = pkbLevelStats.labels.map(
+        (label, index) => {
+            if (label === "Beginner") return levelColors[0];
+            if (label === "Intermediate") return levelColors[1];
+            if (label === "Advanced") return levelColors[2];
+            if (label === "Pro") return levelColors[3];
+            return levelColors[4]; // Mặc định là xám cho các giá trị khác
+        }
+    );
+    
+    pkbLevelChart = new Chart(pkbLevelCtx, {
+        type: 'bar',
+        data: {
+            labels: pkbLevelStats.labels,
+            datasets: [{
+                label: 'Số hội viên',
+                data: pkbLevelStats.data,
+                backgroundColor: backgroundColors1,
+                borderColor: backgroundColors1.map(color => color.replace('0.8', '1')),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            ...commonOptions,
+            plugins: {
+                ...commonOptions.plugins,
+                title: {
+                    display: false
+                },
+                datalabels: {
+                    color: '#333',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    formatter: (value) => value.toLocaleString(),
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
 
             // Update map
             await updateMap(filteredData);
