@@ -28,7 +28,7 @@
         }
 
         .dashboard {
-            padding: 1rem;
+            padding: 0.75rem;
             max-width: 1400px;
             margin: 0.5rem auto;
             background-color: white;
@@ -37,47 +37,48 @@
         }
 
         .filter-container {
-            margin-bottom: 1.5rem;
-            background-color: #f8fafc;
-            padding: 0.75rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+
+        .filter-group {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
 
-        @media (min-width: 640px) {
-            .filter-container {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                /* Thêm justify-content */
-                padding: 1rem;
-                gap: 1rem;
-            }
-
-            .filter-group {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-            }
+        .button-group {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+            justify-content: space-between;
         }
 
-        /* Style cho nút mới */
+        canvas {
+            max-width: 100%;
+            height: auto !important;
+            display: block;
+        }
+
+
+
+        /* Style cho nút */
         .nav-button {
             background-color: #3B82F6;
             color: white;
-            padding: 0.625rem 1.25rem;
+            padding: 0.5rem 0.75rem;
             border: none;
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s ease;
             white-space: nowrap;
-            height: 38px;
-            /* Khớp với chiều cao của select */
+            flex: 1;
+            text-align: center;
+            height: 36px;
         }
 
         .nav-button:hover {
@@ -91,18 +92,18 @@
         .filter-label {
             font-weight: 600;
             color: #4b5563;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             white-space: nowrap;
         }
 
         .filter-select {
             width: 100%;
-            padding: 0.625rem;
+            padding: 0.5rem;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
             background-color: white;
             color: #1f2937;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             cursor: pointer;
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -114,25 +115,11 @@
             padding-right: 2rem;
         }
 
-        @media (min-width: 640px) {
-            .filter-select {
-                width: auto;
-                min-width: 200px;
-            }
-        }
-
         .chart-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        @media (min-width: 768px) {
-            .chart-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1.5rem;
-            }
+            gap: 0.75rem;
+            width: 100%;
         }
 
         .chart-container {
@@ -141,43 +128,23 @@
             border-radius: 8px;
             border: 1px solid rgba(0, 0, 0, 0.1);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            height: 300px;
+            min-height: 300px;
+            overflow: hidden;
+            /* Tránh tràn */
             position: relative;
         }
 
+
         .chart-container.map-chart {
-            grid-column: 1 / -1;
-            height: 500px;
-        }
-
-        @media (min-width: 640px) {
-            .chart-container {
-                height: 350px;
-                padding: 1.25rem;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 400px;
-                padding: 1.5rem;
-            }
+            height: 400px;
         }
 
         .chart-title {
             text-align: center;
             font-weight: bold;
-            margin-bottom: 0.75rem;
             color: #1f2937;
-            font-size: 0.875rem;
-            padding: 0 0.5rem;
-        }
-
-        @media (min-width: 640px) {
-            .chart-title {
-                font-size: 1rem;
-                margin-bottom: 1rem;
-            }
+            font-size: 0.8rem;
+            padding: 0 0.25rem;
         }
 
         .total-stats {
@@ -190,13 +157,13 @@
         }
 
         .total-number {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: bold;
             color: #1f2937;
         }
 
         .total-label {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             color: #6b7280;
         }
 
@@ -215,30 +182,82 @@
             font-size: 12px;
         }
 
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .filter-container {
-            margin-bottom: 1.5rem;
-            background-color: #f8fafc;
-            padding: 0.75rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
+        /* Responsive design */
         @media (min-width: 640px) {
+            .dashboard {
+                padding: 1rem;
+            }
+
             .filter-container {
+                padding: 0.75rem;
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-between;
-                padding: 1rem;
                 gap: 1rem;
+            }
+
+            .filter-group {
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .filter-select {
+                width: auto;
+                min-width: 200px;
+            }
+
+            .chart-container {
+                height: 320px;
+                padding: 1rem;
+            }
+
+            .chart-title {
+                font-size: 0.875rem;
+            }
+
+            .total-number {
+                font-size: 1.5rem;
+            }
+
+            .total-label {
+                font-size: 0.875rem;
+            }
+
+            .nav-button {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+                height: 38px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .chart-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-container {
+                height: 350px;
+                padding: 1.25rem;
+            }
+
+            .chart-container.map-chart {
+                grid-column: 1 / -1;
+                height: 450px;
+            }
+
+            .chart-title {
+                font-size: 1rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .chart-container {
+                height: 380px;
+                padding: 1.5rem;
+            }
+
+            .chart-container.map-chart {
+                height: 500px;
             }
         }
     </style>
@@ -253,7 +272,7 @@
                     <option value="all">Tất cả thời gian</option>
                 </select>
             </div>
-            <div class="filter-group">
+            <div class="button-group">
                 <button class="nav-button" onclick="exportMemberList()">
                     Xuất danh sách
                 </button>
@@ -285,7 +304,7 @@
                 <div class="chart-title">PHÂN BỐ THEO TRÌNH ĐỘ PICKLEBALL</div>
                 <canvas id="pkbLevelChart"></canvas>
             </div>
-            <div class="chart-container">
+            <div class="chart-container map-chart">
                 <div class="chart-title">BẢN ĐỒ PHÂN BỐ HỘI VIÊN</div>
                 <div id="map"></div>
             </div>
@@ -329,33 +348,45 @@
             red: ['rgba(255, 99, 132, 0.8)', 'rgba(255, 99, 132, 0.2)']
         };
 
+        // Kiểm tra nếu là thiết bị di động
+        const isMobile = window.innerWidth < 768;
+
+        // Tùy chỉnh options dựa trên thiết bị
         const commonOptions = {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
+                    display: !isMobile, // Ẩn legend trên mobile
+                    position: isMobile ? 'bottom' : 'top',
                     labels: {
+                        boxWidth: isMobile ? 12 : 16,
                         font: {
                             family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-                            size: 13
+                            size: isMobile ? 10 : 13
                         },
-                        padding: 20
+                        padding: isMobile ? 10 : 20
                     }
                 },
                 title: {
                     font: {
                         family: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-                        size: 16,
+                        size: isMobile ? 14 : 16,
                         weight: 'bold'
                     },
                     padding: {
-                        top: 10,
-                        bottom: 20
+                        top: isMobile ? 5 : 10,
+                        bottom: isMobile ? 10 : 20
+                    }
+                },
+                datalabels: {
+                    font: {
+                        size: isMobile ? 10 : 14
                     }
                 }
             },
             animation: {
-                duration: 2000,
+                duration: isMobile ? 1000 : 2000,
                 easing: 'easeInOutQuart'
             }
         };
@@ -575,8 +606,8 @@
 
             const formatMonth = (monthYear) => {
                 const [month, year] = monthYear.split('/');
-                const date = new Date(year, month - 1);
-                return `T${month}/${year}`;
+                // Nếu là mobile, chỉ hiển thị tháng để tiết kiệm không gian
+                return isMobile ? `T${month}` : `T${month}/${year}`;
             };
 
             return {
@@ -617,12 +648,17 @@
                     const coords = await geocodeAddressWithRetry(address);
 
                     if (coords) {
+                        // Điều chỉnh kích thước marker theo thiết bị
+                        const baseSize = isMobile ? 20 : 25;
+                        const maxSize = isMobile ? 30 : 40;
+                        const markerSize = Math.min(baseSize + members.length * 2, maxSize);
+
                         const marker = L.marker(coords, {
                             icon: L.divIcon({
                                 className: 'cluster-marker',
                                 html: `<div style="
-                                    width: ${Math.min(25 + members.length * 2, 40)}px;
-                                    height: ${Math.min(25 + members.length * 2, 40)}px;
+                                    width: ${markerSize}px;
+                                    height: ${markerSize}px;
                                     background: #3388ff;
                                     border-radius: 50%;
                                     display: flex;
@@ -630,18 +666,19 @@
                                     justify-content: center;
                                     color: white;
                                     font-weight: bold;
-                                    font-size: 14px;
+                                    font-size: ${isMobile ? 12 : 14}px;
                                     border: 2px solid white;
                                     box-shadow: 0 0 10px rgba(0,0,0,0.3);
                                 ">${members.length}</div>`
                             })
                         });
 
+                        // Điều chỉnh nội dung popup cho mobile
                         const popupContent = `
-                            <div class="map-marker-info">
-                                <h3>${address}</h3>
-                                <p>Số hội viên: ${members.length}</p>
-                                <ul style="max-height: 150px; overflow-y: auto; padding-left: 20px;">
+                            <div class="map-marker-info" style="max-width: ${isMobile ? 200 : 250}px">
+                                <h3 style="font-size: ${isMobile ? 14 : 16}px; margin-bottom: 5px">${address}</h3>
+                                <p style="font-size: ${isMobile ? 12 : 14}px">Số hội viên: ${members.length}</p>
+                                <ul style="max-height: ${isMobile ? 120 : 150}px; overflow-y: auto; padding-left: ${isMobile ? 15 : 20}px; font-size: ${isMobile ? 12 : 14}px">
                                     ${members.map(member => `<li>${member["Tên hội viên"]}</li>`).join('')}
                                 </ul>
                             </div>
@@ -658,7 +695,7 @@
             // Điều chỉnh view để hiển thị tất cả markers
             const markerBounds = L.featureGroup([...markers.getLayers()]).getBounds();
             if (markerBounds.isValid()) {
-                map.fitBounds(markerBounds, { padding: [50, 50] });
+                map.fitBounds(markerBounds, { padding: [30, 30] });
             }
         }
 
@@ -806,7 +843,6 @@
             XLSX.writeFile(wb, fileName);
         }
 
-
         function processSkillLevelData(data) {
             const levelStats = new Map();
 
@@ -818,30 +854,29 @@
                 levelStats.set(level, levelStats.get(level) + 1);
             });
 
-            // Sắp xếp theo cấp độ
-            const sortOrder = ["Beginner", "Intermediate", "Advanced", "Pro"];
-            const sortedStats = Array.from(levelStats.entries())
-                .sort((a, b) => {
-                    const indexA = sortOrder.indexOf(a[0]);
-                    const indexB = sortOrder.indexOf(b[0]);
+            // Custom sorting function for pickleball levels
+            function getSortValue(level) {
+                // Handle special case for "1.0-2.0" to sort correctly
+                if (level === "1.0-2.0") return 1.5; // Average of range to put it between 1.0 and 2.0
 
-                    // Nếu cả hai đều có trong sortOrder
-                    if (indexA >= 0 && indexB >= 0) {
-                        return indexA - indexB;
-                    }
-                    // Nếu chỉ a có trong sortOrder
-                    else if (indexA >= 0) {
-                        return -1;
-                    }
-                    // Nếu chỉ b có trong sortOrder
-                    else if (indexB >= 0) {
-                        return 1;
-                    }
-                    // Nếu cả hai không có trong sortOrder, sắp xếp theo số lượng giảm dần
-                    else {
-                        return b[1] - a[1];
-                    }
-                });
+                // Try to parse as a number for numeric levels
+                const numValue = parseFloat(level);
+                if (!isNaN(numValue)) return numValue;
+
+                // For non-numeric levels, assign values to maintain sensible order
+                if (level === "Beginner") return 1.0;
+                if (level === "Intermediate") return 3.0;
+                if (level === "Advanced") return 4.0;
+                if (level === "Pro") return 5.0;
+                if (level === "Chưa xác định") return 999; // Sort to end
+
+                // Default for any other case
+                return 998;
+            }
+
+            // Sort by the calculated numeric values
+            const sortedStats = Array.from(levelStats.entries())
+                .sort((a, b) => getSortValue(a[0]) - getSortValue(b[0]));
 
             return {
                 labels: sortedStats.map(([level]) => level),
@@ -851,7 +886,7 @@
 
         let pkbLevelChart = null;
 
-        // Thêm biểu đồ mới vào hàm renderCharts
+        // Điều chỉnh renderCharts cho responsive
         async function renderCharts() {
             if (growthChart) growthChart.destroy();
             if (feeChart) feeChart.destroy();
@@ -883,9 +918,9 @@
                             type: 'line',
                             fill: false,
                             borderColor: chartColors.green[0],
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
+                            borderWidth: isMobile ? 1 : 2,
+                            pointRadius: isMobile ? 2 : 4,
+                            pointHoverRadius: isMobile ? 4 : 6,
                             pointBackgroundColor: chartColors.green[0],
                             tension: 0.4,
                             order: 1
@@ -901,6 +936,16 @@
                         },
                         datalabels: {
                             display: false
+                        },
+                        legend: {
+                            display: !isMobile || window.innerWidth > 480,
+                            position: 'top',
+                            labels: {
+                                boxWidth: isMobile ? 10 : 16,
+                                font: {
+                                    size: isMobile ? 10 : 12
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -909,73 +954,30 @@
                             grid: {
                                 color: 'rgba(0, 0, 0, 0.05)',
                                 drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                }
                             }
                         },
                         x: {
                             grid: {
                                 display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 8 : 10
+                                },
+                                maxRotation: isMobile ? 90 : 0,
+                                minRotation: isMobile ? 90 : 0
                             }
                         }
                     }
                 }
             });
 
-            // Fee Status Chart với cải tiến
-            // Chỉnh sửa phần xử lý dữ liệu cho biểu đồ TRẠNG THÁI ĐÓNG HỘI PHÍ
-            const feeData = {
-                'DNT BD': {},
-                'HV ngoài': {}
-            };
-
-            filteredData.filter(member => member.Active === "active").forEach(member => {
-                const status = member["Trạng thái hội phí"] || "Chưa xác định";
-                const type = member["Loại Hội Viên"] || "Khác";
-
-                // Phân loại hội viên theo Loại Hội Viên
-                const memberType = type === "DNT BD" ? "DNT BD" :
-                    (type === "HV ngoài" ? "HV ngoài" : "Khác");
-
-                if (!feeData[memberType]) {
-                    feeData[memberType] = {};
-                }
-
-                if (!feeData[memberType][status]) {
-                    feeData[memberType][status] = 0;
-                }
-
-                feeData[memberType][status]++;
-            });
-
-            const totalFeeMembers = filteredData.filter(member => member.Active === "active").length;
-            document.getElementById('totalFeeMembers').textContent = totalFeeMembers.toLocaleString();
-
-            // Chuẩn bị dữ liệu cho biểu đồ
-            const feeDatasets = [];
-            const colors = [
-                [chartColors.green[0], chartColors.green[1]],
-                [chartColors.blue[0], chartColors.blue[1]],
-                [chartColors.orange[0], chartColors.orange[1]]
-            ];
-
-            let index = 0;
-            for (const [memberType, statuses] of Object.entries(feeData)) {
-                if (Object.keys(statuses).length > 0) { // Chỉ thêm dataset nếu có dữ liệu
-                    feeDatasets.push({
-                        label: memberType,
-                        data: Object.values(statuses),
-                        backgroundColor: colors[index % colors.length][0],
-                        borderColor: '#ffffff',
-                        borderWidth: 2
-                    });
-                    index++;
-                }
-            }
-
-            const feeLabels = Array.from(new Set(
-                Object.values(feeData).flatMap(statuses => Object.keys(statuses))
-            ));
-
-            // Tạo biểu đồ tròn đơn giản cho phân loại hội viên
+            // Biểu đồ tròn cho phân loại hội viên
             const feeCtx = document.getElementById('feeChart').getContext('2d');
 
             // Tính tổng số lượng của mỗi loại hội viên
@@ -1022,28 +1024,33 @@
                         legend: {
                             position: 'top',
                             labels: {
-                                font: { size: 13 }
+                                boxWidth: isMobile ? 10 : 16,
+                                font: {
+                                    size: isMobile ? 10 : 12
+                                }
                             }
                         },
                         datalabels: {
                             color: '#fff',
                             font: {
                                 weight: 'bold',
-                                size: 14
+                                size: isMobile ? 10 : 14
                             },
                             formatter: (value, ctx) => {
                                 const total = ctx.dataset.data.reduce((acc, val) => acc + val, 0);
                                 const percentage = ((value / total) * 100).toFixed(1);
-                                return `${value}\n(${percentage}%)`;
+                                return isMobile ? `${percentage}%` : `${value}\n(${percentage}%)`;
                             }
                         }
                     },
-                    cutout: '40%'  // Xóa dòng này nếu bạn muốn biểu đồ tròn đặc
+                    cutout: isMobile ? '50%' : '40%'
                 }
             });
 
-            // Thêm City Stats Chart
-            // Thêm City Stats Chart
+            const totalFeeMembers = filteredData.filter(member => member.Active === "active").length;
+            document.getElementById('totalFeeMembers').textContent = totalFeeMembers.toLocaleString();
+
+            // City Stats Chart
             const cityStats = processCityStats(filteredData);
             const cityStatsCtx = document.getElementById('cityStatsChart').getContext('2d');
 
@@ -1084,20 +1091,22 @@
                         title: {
                             display: false
                         },
+                        legend: {
+                            display: false
+                        },
                         datalabels: {
                             anchor: 'end',
                             align: 'right',
                             color: '#333',
                             font: {
                                 weight: 'bold',
-                                size: 14 // Tăng kích thước font
+                                size: isMobile ? 10 : 14
                             },
                             formatter: (value) => value.toLocaleString(),
                             display: true,
-                            offset: 4, // Thêm offset để đẩy nhãn ra xa hơn
-                            clamp: true // Đảm bảo nhãn không bị cắt
+                            offset: 4,
+                            clamp: true
                         }
-
                     },
                     scales: {
                         x: {
@@ -1105,96 +1114,133 @@
                             grid: {
                                 display: false
                             },
-                            suggestedMax: 35 // Tăng giá trị tối đa trên trục x
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                }
+                            },
+                            suggestedMax: Math.max(...cityStats.data) + 5
                         },
                         y: {
                             grid: {
                                 display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                }
                             }
                         }
                     }
                 }
             });
 
-            // Thêm biểu đồ Trình PKB
-    const pkbLevelStats = processSkillLevelData(filteredData);
-    const pkbLevelCtx = document.getElementById('pkbLevelChart').getContext('2d');
-    
-    // Tạo mảng màu riêng cho từng cấp độ
-    const levelColors = [
-        'rgba(75, 192, 192, 0.8)',   // Beginner - Xanh lá
-        'rgba(54, 162, 235, 0.8)',   // Intermediate - Xanh dương
-        'rgba(255, 159, 64, 0.8)',   // Advanced - Cam
-        'rgba(153, 102, 255, 0.8)',  // Pro - Tím
-        'rgba(201, 203, 207, 0.8)'   // Chưa xác định - Xám
-    ];
-    
-    // Đảm bảo có đủ màu cho tất cả các cấp độ
-    const backgroundColors1 = pkbLevelStats.labels.map(
-        (label, index) => {
-            if (label === "Beginner") return levelColors[0];
-            if (label === "Intermediate") return levelColors[1];
-            if (label === "Advanced") return levelColors[2];
-            if (label === "Pro") return levelColors[3];
-            return levelColors[4]; // Mặc định là xám cho các giá trị khác
-        }
-    );
-    
-    pkbLevelChart = new Chart(pkbLevelCtx, {
-        type: 'bar',
-        data: {
-            labels: pkbLevelStats.labels,
-            datasets: [{
-                label: 'Số hội viên',
-                data: pkbLevelStats.data,
-                backgroundColor: backgroundColors1,
-                borderColor: backgroundColors1.map(color => color.replace('0.8', '1')),
-                borderWidth: 1
-            }]
-        },
-        options: {
-            ...commonOptions,
-            plugins: {
-                ...commonOptions.plugins,
-                title: {
-                    display: false
+            // Biểu đồ Trình PKB
+            const pkbLevelStats = processSkillLevelData(filteredData);
+            const pkbLevelCtx = document.getElementById('pkbLevelChart').getContext('2d');
+
+            // Mảng màu khác nhau cho từng cấp độ
+            const levelColors = [
+                'rgba(255, 99, 132, 0.8)',    // 1.0-2.0 - Hồng
+                'rgba(255, 159, 64, 0.8)',    // 2.0 - Cam
+                'rgba(255, 205, 86, 0.8)',    // 2.5 - Vàng
+                'rgba(75, 192, 192, 0.8)',    // 3.0 - Xanh lá
+                'rgba(54, 162, 235, 0.8)',    // 3.5 - Xanh dương
+                'rgba(153, 102, 255, 0.8)',   // 4.0 - Tím
+                'rgba(201, 203, 207, 0.8)',   // 4.5 - Xám
+                'rgba(136, 45, 23, 0.8)',     // 5.0 - Nâu
+                'rgba(205, 127, 50, 0.8)',    // Pro - Đồng
+                'rgba(0, 128, 0, 0.8)',       // Beginner - Xanh lá đậm
+                'rgba(0, 0, 139, 0.8)',       // Intermediate - Xanh dương đậm
+                'rgba(255, 0, 0, 0.8)',       // Advanced - Đỏ
+                'rgba(169, 169, 169, 0.8)'    // Chưa xác định - Xám nhạt
+            ];
+
+            // Đảm bảo mỗi cột có một màu khác nhau
+            const backgroundColors1 = pkbLevelStats.labels.map((label, index) => {
+                return levelColors[index % levelColors.length];
+            });
+
+            pkbLevelChart = new Chart(pkbLevelCtx, {
+                type: 'bar',
+                data: {
+                    labels: pkbLevelStats.labels,
+                    datasets: [{
+                        label: 'Số hội viên',
+                        data: pkbLevelStats.data,
+                        backgroundColor: backgroundColors1,
+                        borderColor: backgroundColors1.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
                 },
-                datalabels: {
-                    color: '#333',
-                    font: {
-                        weight: 'bold',
-                        size: 14
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: false
+                        },
+                        datalabels: {
+                            color: '#333',
+                            font: {
+                                weight: 'bold',
+                                size: isMobile ? 10 : 14
+                            },
+                            formatter: (value) => value.toLocaleString(),
+                            display: true
+                        }
                     },
-                    formatter: (value) => value.toLocaleString(),
-                    display: true
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)',
-                        drawBorder: false
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 8 : 10
+                                },
+                                maxRotation: isMobile ? 45 : 0,
+                                minRotation: isMobile ? 45 : 0
+                            }
+                        }
                     }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
                 }
-            }
-        }
-    });
+            });
 
             // Update map
             await updateMap(filteredData);
         }
-        // Thay đổi CSS Grid để hiển thị 4 biểu đồ
-        document.querySelector('.chart-grid').style.gridTemplateColumns = 'repeat(2, 1fr)';
 
         document.getElementById('monthFilter').addEventListener('change', function (e) {
             currentFilter = e.target.value;
             renderCharts();
+        });
+
+        // Thêm event listener cho resize để cập nhật biểu đồ khi xoay màn hình
+        window.addEventListener('resize', function () {
+            // Cập nhật biến isMobile
+            const wasIsMobile = isMobile;
+            isMobile = window.innerWidth < 768;
+
+            // Chỉ render lại chart nếu kích thước màn hình thay đổi qua ngưỡng mobile/desktop
+            if (wasIsMobile !== isMobile) {
+                renderCharts();
+            }
         });
 
         async function initializeDashboard() {
@@ -1205,7 +1251,7 @@
             } catch (error) {
                 console.error("Lỗi khởi tạo:", error);
                 document.querySelector('.dashboard').innerHTML =
-                    '<div class="error">Không thể tải dữ liệu. Vui lòng thử lại sau.</div>';
+                    '<div class="error" style="padding: 20px; text-align: center; color: #e53e3e;">Không thể tải dữ liệu. Vui lòng thử lại sau.</div>';
             }
         }
 
