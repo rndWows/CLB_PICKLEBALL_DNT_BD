@@ -5,12 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link
-    href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@700&family=Open+Sans:wght@400;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
     rel="stylesheet">
   <title>Happy Birthday</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Open Sans', sans-serif;
       margin: 0;
       padding: 0;
       display: flex;
@@ -29,21 +29,26 @@
       max-width: 1200px;
       height: auto;
       overflow: hidden;
-      background: url('https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/anh1.webp') no-repeat center center;
-      background-size: cover;
+      background: url('https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/anhpick.webp')  center/cover;
+      border: 2px solid #FFD700;
+      border-radius: 15px;
+      position: relative;
+      padding: 15px 0;
     }
 
     .card {
       display: flex;
-      flex-direction: column;
-      width: 100%;
+      flex-direction: row;
+      justify-content: space-between;
+      width: 90%;
       height: 100%;
     }
 
     .left,
     .right {
-      padding: 20px;
-      width: 100%;
+      padding: 30px;
+      margin: 10px;
+      width: 50%;
       box-sizing: border-box;
     }
 
@@ -53,69 +58,100 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background-size: cover;
       text-align: center;
     }
 
     .left img {
       width: 200px;
       height: 200px;
-      border: 2px solid gold;
+      border: none;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 255, 255, 0.5);
       border-radius: 50%;
       margin-bottom: 20px;
     }
 
-
     .birthday-title {
-      color: yellow;
+      color: #FFD700;
       font-size: 24px;
-      font-family: 'Verdana', serif;
+      font-family: 'Montserrat', sans-serif;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin-bottom: 10px;
     }
 
     .name {
       font-size: 36px;
-      color: rgb(255, 255, 255);
-      font-family: 'Calibri', serif;
-      font-weight: bolder;
-      text-shadow: 5px 5px 10px rgba(227, 228, 210, 0.623);
+      color: #FFD700;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     }
 
     .right {
       justify-content: center;
       padding: 25px 20px;
-      width: 100%;
-      background-size: cover;
       color: #ffffff;
     }
 
-    .rightnho {
-      padding: 20px;
-    }
-
     .right p {
-      color: yellow;
-      font-family: 'Arial', sans-serif;
-      font-weight: bold;
-      font-size: 18px;
-      line-height: 1.6;
+      color: #FFD700;
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 1.8;
+      text-align: center;
     }
-
 
     .logohoi {
-      width: 140px;
-      margin-bottom: 15px;
+      width: 100px;
     }
 
     .hpbd {
-      width: 220px;
+      width: 200px;
+    }
+
+    .quote {
+      font-style: italic;
+      font-size: 14px;
+      color: #FFD700;
+      margin-top: 10px;
     }
 
     .footer {
       text-align: center;
-      margin-top: 40px;
-      font-size: 14px;
+      font-size: 12px;
       color: #ffffff;
-      margin-bottom: 110px;
+    }
+
+    .pickleball-effect {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: url('pickleball.png') no-repeat;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      transform: perspective(500px) rotateY(20deg);
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 70%);
+      animation: sparkle 2s infinite;
+    }
+
+    @keyframes sparkle {
+      0% {
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+      }
     }
 
     #loading {
@@ -148,15 +184,6 @@
     }
 
     @media (min-width: 768px) {
-      .card {
-        flex-direction: row;
-      }
-
-      .left,
-      .right {
-        width: 50%;
-      }
-
       .left img {
         width: 300px;
         height: 400px;
@@ -164,10 +191,6 @@
 
       .birthday-title {
         font-size: 40px;
-      }
-
-      .name {
-        font-size: 52px;
       }
     }
   </style>
@@ -177,28 +200,31 @@
   <div id="loading">Đang tải dữ liệu...</div>
   <div id="error-container"></div>
 
-  <div class="container" style="display: none;">
+  <div class="container" style="display: none; position: relative;">
     <div class="card">
       <div class="left">
         <img id="profile-image" src="default-profile.jpg" alt="Profile Image">
-        <div class="birthday-title">HAPPY BIRTHDAY</div> <br>
+        <div class="birthday-title">HAPPY BIRTHDAY</div>
         <div class="name" id="name"></div>
       </div>
       <div class="right">
-        <div class="rightnho">
-          <center><img src="https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/logo.png" alt="Logohoi" class="logohoi">
-          </center>
-          <center><img src="https://rndwows.github.io/HDNTB/hpbd.png" alt="hpbd" class="hpbd"></center>
-          <p>&emsp;CLB Pickleball Doanh Nhân Trẻ Bình Dương kính chúc Anh/Chị một sinh nhật thật ý nghĩa! Chúc Anh/Chị
-            luôn dồi dào sức khỏe, hạnh phúc và thành công trong sự nghiệp. Mong rằng Pickleball không chỉ mang đến niềm
-            vui thể thao mà còn là nơi gắn kết những giá trị bền vững trong công việc và cuộc sống.</p>
-          <p>&emsp;Chúc bạn sinh nhật vui vẻ!</p>
-          <div class="footer">
-            <p>BCH CLB PICKLEBALL DNT BD.</p>
-          </div>
+        <center><img src="https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/logo.png" alt="Logohoi" class="logohoi"></center>
+        <center><img src="https://rndwows.github.io/HDNTB/hpbd.png" alt="hpbd" class="hpbd"></center>
+        <p style="margin: -15px;">CLB Pickleball Doanh Nhân Trẻ Bình Dương kính chúc Anh/Chị một sinh nhật thật ý nghĩa! Chúc Anh/Chị luôn dồi
+          dào sức khỏe, hạnh phúc và thành công trong sự nghiệp. Mong rằng Pickleball không chỉ mang đến niềm vui thể
+          thao mà còn là nơi gắn kết những giá trị bền vững trong công việc và cuộc sống.</p>
+        <p>Chúc bạn sinh nhật vui vẻ!</p>
+        <p class="quote">"Hạnh phúc là hành trình, không phải đích đến."</p>
+        <div class="footer">
+          <p>BCH CLB PICKLEBALL DNT BD.</p>
         </div>
       </div>
     </div>
+    <!-- Example pickleball and sparkle effects (adjust positions as needed) -->
+    <div class="pickleball-effect" style="top: 50px; left: 50px;"></div>
+    <div class="pickleball-effect" style="top: 200px; right: 50px;"></div>
+    <div class="sparkle" style="top: 100px; left: 200px;"></div>
+    <div class="sparkle" style="top: 300px; right: 150px;"></div>
   </div>
 
   <button id="capture-btn" style="display: none;">Chụp trang này</button>
