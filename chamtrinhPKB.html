@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Chấm Trình PKB HV CLB</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .date {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #138496;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #d63384;
+            background-color: #ffe6e6;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: #4472C4;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid #ddd;
+        }
+
+        td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: white;
+        }
+
+        .female-row {
+            background-color: #FFE6E6 !important;
+        }
+
+        .male-gender {
+            color: #333;
+        }
+
+        .female-gender {
+            color: #d63384;
+            font-weight: bold;
+        }
+
+        .section-header {
+            background-color: #e3f2fd !important;
+            font-weight: bold;
+            color: #1976d2;
+        }
+
+        .notes-cell {
+            min-width: 120px;
+            height: 30px;
+        }
+
+        @media print {
+
+            .controls,
+            .btn {
+                display: none !important;
+            }
+
+            body {
+                margin: 0;
+                background-color: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+
+            table {
+                font-size: 12px;
+            }
+        }
+    </style>
+    <!-- Thêm thư viện XLSX để xuất Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>BẢNG CHẤM TRÌNH PKB HV CLB</h1>
+        <p class="date" id="currentDate"></p>
+
+        <div class="controls">
+            <button class="btn btn-success" onclick="exportToExcel()">📊 Xuất Excel</button>
+            <button class="btn btn-info" onclick="printTable()">🖨️ In bảng</button>
+        </div>
+
+        <div id="loading" class="loading">
+            Đang tải dữ liệu...
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="stats" class="stats" style="display: none;">
+            <strong>Thống kê: </strong>
+            <span id="statsContent"></span>
+        </div>
+
+        <table id="dataTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Tên hội viên</th>
+                    <th>Giới tính</th>
+                    <th>Trình PKB</th>
+                    <th>Ghi chú</th>
+                    <th>Điện thoại hội viên</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Constants for AppSheet connection
+        const appId = 'd9ee17ac-4397-452d-9e74-97997607fa4b';
+        const accessKey = 'V2-Rovhm-ZiLxx-msd7k-TSoig-NkECL-5LXEq-Kraws-yE09V';
+        const region = 'www';
+        const tableName = 'HV_NCC_KH';
+
+        // Global data storage
+        let currentData = [];
+
+        // Function to fetch data from AppSheet
+        async function fetchAppSheetData() {
+            try {
+                const response = await fetch(`https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`, {
+                    method: 'POST',
+                    headers: {
+                        'ApplicationAccessKey': accessKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        Action: 'Find',
+                        Properties: {},
+                        Selector: `Filter(${tableName}, true)`
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid data format received');
+                }
+
+                return data;
+            } catch (error) {
+                console.error('Failed to fetch data:', error);
+                throw error;
+            }
+        }
+
+        // Function to process and sort data
+        function processData(rawData) {
+            // Filter and map data to required format
+            const processedData = rawData.map(item => ({
+                name: item['Tên hội viên'] || '',
+                gender: item['Giới tính'] || '',
+                level: parseFloat(item['Trình PKB']) || 0,
+                phone: item['Điện thoại hội viên'] || '',
+                notes: item['Ghi chú'] || ''
+            })).filter(item => item.name && item.gender);
+
+            // Separate male and female data
+            const maleData = processedData.filter(item =>
+                item.gender.toLowerCase().includes('nam') ||
+                item.gender.toLowerCase() === 'male'
+            );
+
+            const femaleData = processedData.filter(item =>
+                item.gender.toLowerCase().includes('nữ') ||
+                item.gender.toLowerCase().includes('nu') ||
+                item.gender.toLowerCase() === 'female'
+            );
+
+            // Sort by level (ascending)
+            maleData.sort((a, b) => a.level - b.level);
+            femaleData.sort((a, b) => a.level - b.level);
+
+            return { maleData, femaleData };
+        }
+
+        // Function to render table
+        function renderTable(maleData, femaleData) {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            let allData = [];
+
+            // Add male section header
+            if (maleData.length > 0) {
+                const maleHeaderRow = document.createElement('tr');
+                maleHeaderRow.className = 'section-header';
+                maleHeaderRow.innerHTML = `
+                    <td colspan="6"><strong>HẠNG MỤC NAM (${maleData.length} người)</strong></td>
+                `;
+                tableBody.appendChild(maleHeaderRow);
+
+                // Add male data
+                maleData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.name}</td>
+                        <td class="male-gender">NAM</td>
+                        <td>${item.level}</td>
+                        <td class="notes-cell"></td>
+                        <td>${item.phone}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                allData = allData.concat(maleData.map(item => ({ ...item, gender: 'NAM', section: 'male' })));
+            }
+
+            // Add female section header
+            if (femaleData.length > 0) {
+                const femaleHeaderRow = document.createElement('tr');
+                femaleHeaderRow.className = 'section-header';
+                femaleHeaderRow.innerHTML = `
+                    <td colspan="6"><strong>HẠNG MỤC NỮ (${femaleData.length} người)</strong></td>
+                `;
+                tableBody.appendChild(femaleHeaderRow);
+
+                // Add female data
+                femaleData.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'female-row';
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.name}</td>
+                        <td class="female-gender">NỮ</td>
+                        <td>${item.level}</td>
+                        <td class="notes-cell"></td>
+                        <td>${item.phone}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                allData = allData.concat(femaleData.map(item => ({ ...item, gender: 'NỮ', section: 'female' })));
+            }
+
+            // Store current data globally
+            currentData = allData;
+
+            return { total: allData.length, male: maleData.length, female: femaleData.length };
+        }
+
+        // Function to show/hide elements
+        function showElement(id) {
+            const element = document.getElementById(id);
+            if (element.tagName.toLowerCase() === 'table') {
+                element.style.display = 'table'; // Dùng 'table' thay vì 'block'
+            } else {
+                element.style.display = 'block';
+            }
+        }
+        function hideElement(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            showElement('error');
+        }
+
+        function hideError() {
+            hideElement('error');
+        }
+
+        // Function to update stats
+        function updateStats(stats) {
+            document.getElementById('statsContent').innerHTML =
+                `Tổng cộng: <strong>${stats.total}</strong> người | 
+                 Nam: <strong>${stats.male}</strong> người | 
+                 Nữ: <strong>${stats.female}</strong> người`;
+            showElement('stats');
+        }
+
+        // Function to export to Excel
+        function exportToExcel() {
+            if (currentData.length === 0) {
+                alert('Không có dữ liệu để xuất!');
+                return;
+            }
+
+            // Prepare data for Excel
+            const excelData = [];
+
+            // Add headers
+            excelData.push(['STT', 'Tên hội viên', 'Giới tính', 'Trình PKB', 'Ghi chú', 'Điện thoại hội viên']);
+
+            let sttMale = 1;
+            let sttFemale = 1;
+
+            // Add male section
+            const maleData = currentData.filter(item => item.section === 'male');
+            if (maleData.length > 0) {
+                excelData.push([`HẠNG MỤC NAM (${maleData.length} người)`, '', '', '', '', '']);
+                maleData.forEach(item => {
+                    excelData.push([sttMale++, item.name, 'NAM', item.level, '', item.phone]);
+                });
+                excelData.push(['', '', '', '', '', '']); // Empty row
+            }
+
+            // Add female section
+            const femaleData = currentData.filter(item => item.section === 'female');
+            if (femaleData.length > 0) {
+                excelData.push([`HẠNG MỤC NỮ (${femaleData.length} người)`, '', '', '', '', '']);
+                femaleData.forEach(item => {
+                    excelData.push([sttFemale++, item.name, 'NỮ', item.level, '', item.phone]);
+                });
+            }
+
+            // Create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+            // Auto-fit columns
+            const colWidths = [
+                { width: 10 },  // STT
+                { width: 25 },  // Tên hội viên
+                { width: 12 },  // Giới tính
+                { width: 12 },  // Trình PKB
+                { width: 15 },  // Ghi chú
+                { width: 15 }   // Điện thoại
+            ];
+            ws['!cols'] = colWidths;
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Bảng Chấm Trình PKB');
+
+            // Generate filename with current date
+            const now = new Date();
+            const dateString = now.toISOString().split('T')[0];
+            const filename = `Bang_Cham_Trinh_PKB_${dateString}.xlsx`;
+
+            // Save file
+            XLSX.writeFile(wb, filename);
+        }
+
+        // Function to print table
+        function printTable() {
+            if (currentData.length === 0) {
+                alert('Không có dữ liệu để in!');
+                return;
+            }
+
+            window.print();
+        }
+
+        // Main function to load and display data
+        async function loadData() {
+            hideError();
+            hideElement('dataTable');
+            hideElement('stats');
+            showElement('loading');
+
+            try {
+                // Fetch data from AppSheet
+                const rawData = await fetchAppSheetData();
+
+                // Process and sort data
+                const { maleData, femaleData } = processData(rawData);
+
+                // Render table
+                const stats = renderTable(maleData, femaleData);
+
+                // Update stats
+                updateStats(stats);
+
+                // Show table
+                hideElement('loading');
+                showElement('dataTable');
+
+                console.log(`Loaded ${stats.total} records (${stats.male} male, ${stats.female} female)`);
+
+            } catch (error) {
+                hideElement('loading');
+                showError(`Lỗi khi tải dữ liệu: ${error.message}`);
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Function to set current date
+        function setCurrentDate() {
+            const now = new Date();
+            const dateString = now.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            document.getElementById('currentDate').textContent = `Ngày chấm: ${dateString}`;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            setCurrentDate();
+            loadData(); // Tự động tải dữ liệu khi trang được tải
+        });
+
+        // Auto-refresh every 5 minutes
+        setInterval(loadData, 5 * 60 * 1000);
+    </script>
+</body>
+
+</html>
