@@ -195,10 +195,10 @@
                 <tr>
                     <th>STT</th>
                     <th>Tên hội viên</th>
+                    <th>Điện thoại hội viên</th>
                     <th>Giới tính</th>
                     <th>Trình PKB</th>
                     <th>Ghi chú</th>
-                    <th>Điện thoại hội viên</th>
                 </tr>
             </thead>
             <tbody id="tableBody">
@@ -251,14 +251,20 @@
 
         // Function to process and sort data
         function processData(rawData) {
-            // Filter and map data to required format
+            // Filter and map data to required format - only active members
             const processedData = rawData.map(item => ({
                 name: item['Tên hội viên'] || '',
                 gender: item['Giới tính'] || '',
                 level: parseFloat(item['Trình PKB']) || 0,
                 phone: item['Điện thoại hội viên'] || '',
-                notes: item['Ghi chú'] || ''
-            })).filter(item => item.name && item.gender);
+                notes: item['Ghi chú'] || '',
+                active: item['Active'] || ''
+            })).filter(item => 
+                item.name && 
+                item.gender && 
+                item.active && 
+                item.active.toLowerCase() === 'active'
+            );
 
             // Separate male and female data
             const maleData = processedData.filter(item =>
@@ -301,10 +307,10 @@
                     row.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${item.name}</td>
+                        <td>${item.phone}</td>
                         <td class="male-gender">NAM</td>
                         <td>${item.level}</td>
                         <td class="notes-cell"></td>
-                        <td>${item.phone}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -328,10 +334,10 @@
                     row.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${item.name}</td>
+                        <td>${item.phone}</td>
                         <td class="female-gender">NỮ</td>
                         <td>${item.level}</td>
                         <td class="notes-cell"></td>
-                        <td>${item.phone}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -387,7 +393,7 @@
             const excelData = [];
 
             // Add headers
-            excelData.push(['STT', 'Tên hội viên', 'Giới tính', 'Trình PKB', 'Ghi chú', 'Điện thoại hội viên']);
+            excelData.push(['STT', 'Tên hội viên', 'Điện thoại hội viên', 'Giới tính', 'Trình PKB', 'Ghi chú']);
 
             let sttMale = 1;
             let sttFemale = 1;
@@ -397,7 +403,7 @@
             if (maleData.length > 0) {
                 excelData.push([`HẠNG MỤC NAM (${maleData.length} người)`, '', '', '', '', '']);
                 maleData.forEach(item => {
-                    excelData.push([sttMale++, item.name, 'NAM', item.level, '', item.phone]);
+                    excelData.push([sttMale++, item.name, item.phone, 'NAM', item.level, '']);
                 });
                 excelData.push(['', '', '', '', '', '']); // Empty row
             }
@@ -407,7 +413,7 @@
             if (femaleData.length > 0) {
                 excelData.push([`HẠNG MỤC NỮ (${femaleData.length} người)`, '', '', '', '', '']);
                 femaleData.forEach(item => {
-                    excelData.push([sttFemale++, item.name, 'NỮ', item.level, '', item.phone]);
+                    excelData.push([sttFemale++, item.name, item.phone, 'NỮ', item.level, '']);
                 });
             }
 
@@ -419,10 +425,10 @@
             const colWidths = [
                 { width: 10 },  // STT
                 { width: 25 },  // Tên hội viên
+                { width: 15 },  // Điện thoại hội viên
                 { width: 12 },  // Giới tính
                 { width: 12 },  // Trình PKB
-                { width: 15 },  // Ghi chú
-                { width: 15 }   // Điện thoại
+                { width: 15 }   // Ghi chú
             ];
             ws['!cols'] = colWidths;
 
