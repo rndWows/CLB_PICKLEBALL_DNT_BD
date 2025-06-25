@@ -38,6 +38,10 @@
             margin-bottom: 20px;
         }
 
+        .control-row {
+            margin-bottom: 10px;
+        }
+
         .btn {
             padding: 10px 20px;
             margin: 0 5px;
@@ -64,6 +68,27 @@
 
         .btn-info:hover {
             background-color: #138496;
+        }
+
+        .checkbox-container {
+            display: inline-flex;
+            align-items: center;
+            margin: 0 10px;
+            padding: 8px 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(1.2);
+        }
+
+        .checkbox-container label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
         }
 
         .loading {
@@ -143,6 +168,14 @@
             height: 30px;
         }
 
+        .phone-column {
+            transition: all 0.3s ease;
+        }
+
+        .phone-column.hidden {
+            display: none;
+        }
+
         @media print {
 
             .controls,
@@ -175,8 +208,14 @@
         <p class="date" id="currentDate"></p>
 
         <div class="controls">
-            <button class="btn btn-success" onclick="exportToExcel()">📊 Xuất Excel</button>
-            <button class="btn btn-info" onclick="printTable()">🖨️ In bảng</button>
+            <div class="control-row">
+                <button class="btn btn-success" onclick="exportToExcel()">📊 Xuất Excel</button>
+                <button class="btn btn-info" onclick="printTable()">🖨️ In bảng</button>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showPhoneCheckbox" checked onchange="togglePhoneColumn()">
+                    <label for="showPhoneCheckbox">📱 Hiển thị số điện thoại</label>
+                </div>
+            </div>
         </div>
 
         <div id="loading" class="loading">
@@ -195,7 +234,7 @@
                 <tr>
                     <th>STT</th>
                     <th>Tên hội viên</th>
-                    <th>Điện thoại hội viên</th>
+                    <th class="phone-column">Điện thoại hội viên</th>
                     <th>Giới tính</th>
                     <th>Trình PKB</th>
                     <th>Ghi chú</th>
@@ -215,6 +254,22 @@
 
         // Global data storage
         let currentData = [];
+        let showPhoneColumn = true;
+
+        // Function to toggle phone column visibility
+        function togglePhoneColumn() {
+            const checkbox = document.getElementById('showPhoneCheckbox');
+            showPhoneColumn = checkbox.checked;
+            
+            const phoneColumns = document.querySelectorAll('.phone-column');
+            phoneColumns.forEach(column => {
+                if (showPhoneColumn) {
+                    column.classList.remove('hidden');
+                } else {
+                    column.classList.add('hidden');
+                }
+            });
+        }
 
         // Function to fetch data from AppSheet
         async function fetchAppSheetData() {
@@ -307,7 +362,7 @@
                     row.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${item.name}</td>
-                        <td>${item.phone}</td>
+                        <td class="phone-column">${item.phone}</td>
                         <td class="male-gender">NAM</td>
                         <td>${item.level}</td>
                         <td class="notes-cell"></td>
@@ -334,7 +389,7 @@
                     row.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${item.name}</td>
-                        <td>${item.phone}</td>
+                        <td class="phone-column">${item.phone}</td>
                         <td class="female-gender">NỮ</td>
                         <td>${item.level}</td>
                         <td class="notes-cell"></td>
@@ -348,6 +403,9 @@
             // Store current data globally
             currentData = allData;
 
+            // Apply phone column visibility
+            togglePhoneColumn();
+
             return { total: allData.length, male: maleData.length, female: femaleData.length };
         }
 
@@ -355,11 +413,12 @@
         function showElement(id) {
             const element = document.getElementById(id);
             if (element.tagName.toLowerCase() === 'table') {
-                element.style.display = 'table'; // Dùng 'table' thay vì 'block'
+                element.style.display = 'table';
             } else {
                 element.style.display = 'block';
             }
         }
+        
         function hideElement(id) {
             document.getElementById(id).style.display = 'none';
         }
@@ -392,8 +451,12 @@
             // Prepare data for Excel
             const excelData = [];
 
-            // Add headers
-            excelData.push(['STT', 'Tên hội viên', 'Điện thoại hội viên', 'Giới tính', 'Trình PKB', 'Ghi chú']);
+            // Add headers - conditionally include phone column
+            if (showPhoneColumn) {
+                excelData.push(['STT', 'Tên hội viên', 'Điện thoại hội viên', 'Giới tính', 'Trình PKB', 'Ghi chú']);
+            } else {
+                excelData.push(['STT', 'Tên hội viên', 'Giới tính', 'Trình PKB', 'Ghi chú']);
+            }
 
             let sttMale = 1;
             let sttFemale = 1;
@@ -401,35 +464,60 @@
             // Add male section
             const maleData = currentData.filter(item => item.section === 'male');
             if (maleData.length > 0) {
-                excelData.push([`HẠNG MỤC NAM (${maleData.length} người)`, '', '', '', '', '']);
-                maleData.forEach(item => {
-                    excelData.push([sttMale++, item.name, item.phone, 'NAM', item.level, '']);
-                });
-                excelData.push(['', '', '', '', '', '']); // Empty row
+                if (showPhoneColumn) {
+                    excelData.push([`HẠNG MỤC NAM (${maleData.length} người)`, '', '', '', '', '']);
+                    maleData.forEach(item => {
+                        excelData.push([sttMale++, item.name, item.phone, 'NAM', item.level, '']);
+                    });
+                } else {
+                    excelData.push([`HẠNG MỤC NAM (${maleData.length} người)`, '', '', '', '']);
+                    maleData.forEach(item => {
+                        excelData.push([sttMale++, item.name, 'NAM', item.level, '']);
+                    });
+                }
+                excelData.push(Array(showPhoneColumn ? 6 : 5).fill('')); // Empty row
             }
 
             // Add female section
             const femaleData = currentData.filter(item => item.section === 'female');
             if (femaleData.length > 0) {
-                excelData.push([`HẠNG MỤC NỮ (${femaleData.length} người)`, '', '', '', '', '']);
-                femaleData.forEach(item => {
-                    excelData.push([sttFemale++, item.name, item.phone, 'NỮ', item.level, '']);
-                });
+                if (showPhoneColumn) {
+                    excelData.push([`HẠNG MỤC NỮ (${femaleData.length} người)`, '', '', '', '', '']);
+                    femaleData.forEach(item => {
+                        excelData.push([sttFemale++, item.name, item.phone, 'NỮ', item.level, '']);
+                    });
+                } else {
+                    excelData.push([`HẠNG MỤC NỮ (${femaleData.length} người)`, '', '', '', '']);
+                    femaleData.forEach(item => {
+                        excelData.push([sttFemale++, item.name, 'NỮ', item.level, '']);
+                    });
+                }
             }
 
             // Create workbook and worksheet
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(excelData);
 
-            // Auto-fit columns
-            const colWidths = [
-                { width: 10 },  // STT
-                { width: 25 },  // Tên hội viên
-                { width: 15 },  // Điện thoại hội viên
-                { width: 12 },  // Giới tính
-                { width: 12 },  // Trình PKB
-                { width: 15 }   // Ghi chú
-            ];
+            // Auto-fit columns based on phone column visibility
+            let colWidths;
+            if (showPhoneColumn) {
+                colWidths = [
+                    { width: 10 },  // STT
+                    { width: 25 },  // Tên hội viên
+                    { width: 15 },  // Điện thoại hội viên
+                    { width: 12 },  // Giới tính
+                    { width: 12 },  // Trình PKB
+                    { width: 15 }   // Ghi chú
+                ];
+            } else {
+                colWidths = [
+                    { width: 10 },  // STT
+                    { width: 25 },  // Tên hội viên
+                    { width: 12 },  // Giới tính
+                    { width: 12 },  // Trình PKB
+                    { width: 15 }   // Ghi chú
+                ];
+            }
             ws['!cols'] = colWidths;
 
             // Add worksheet to workbook
@@ -501,11 +589,9 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function () {
             setCurrentDate();
-            loadData(); // Tự động tải dữ liệu khi trang được tải
+            loadData();
         });
 
-        // Auto-refresh every 5 minutes
-        setInterval(loadData, 5 * 60 * 1000);
     </script>
 </body>
 
