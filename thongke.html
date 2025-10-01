@@ -322,6 +322,10 @@
                 <div class="chart-title">PHÂN BỐ THEO TRÌNH ĐỘ PICKLEBALL</div>
                 <canvas id="pkbLevelChart"></canvas>
             </div>
+            <div class="chart-container">
+                <div class="chart-title">THỐNG KÊ THÀNH TÍCH GIỚI THIỆU HỘI VIÊN</div>
+                <canvas id="referralChart"></canvas>
+            </div>
             <div class="chart-container map-chart">
                 <div class="chart-title">BẢN ĐỒ PHÂN BỐ HỘI VIÊN</div>
                 <div id="map"></div>
@@ -343,6 +347,8 @@
         let growthChart = null;
         let feeChart = null;
         let cityStatsChart = null;
+        let pkbLevelChart = null;
+        let referralChart = null;
         let map;
         let markers = L.layerGroup();
 
@@ -748,7 +754,7 @@
                     const cityName = match[2].trim();
                     // Tìm tên thành phố tương ứng
                     for (const [city, aliases] of Object.entries(cityAliases)) {
-                        if (aliases.some(alias => cityName.includes(alias.toUpperCase())) ||
+                        if (aliases.some(alias => alias.toUpperCase().includes(cityName)) ||
                             cityName.includes(city.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase())) {
                             foundCity = city;
                             break;
@@ -902,7 +908,39 @@
             };
         }
 
-        let pkbLevelChart = null;
+        function processReferralData(data) {
+            const referralStats = new Map();
+            
+            // Tạo map để tra cứu tên từ mã
+            const memberCodeToName = new Map();
+            data.forEach(member => {
+                if (member["Mã"] && member["Tên hội viên"]) {
+                    memberCodeToName.set(member["Mã"], member["Tên hội viên"]);
+                }
+            });
+            
+            // Đếm số lượng giới thiệu
+            data.filter(member => member.Active === "active").forEach(member => {
+                const referrerCode = member["Người giới thiệu"];
+                if (referrerCode) {
+                    const referrerName = memberCodeToName.get(referrerCode) || referrerCode;
+                    if (!referralStats.has(referrerName)) {
+                        referralStats.set(referrerName, 0);
+                    }
+                    referralStats.set(referrerName, referralStats.get(referrerName) + 1);
+                }
+            });
+            
+            // Sắp xếp theo số lượng giảm dần và lấy top 10
+            const sortedStats = Array.from(referralStats.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            return {
+                labels: sortedStats.map(([name]) => name),
+                data: sortedStats.map(([, count]) => count)
+            };
+        }
 
         // Điều chỉnh renderCharts cho responsive
         async function renderCharts() {
@@ -910,6 +948,7 @@
             if (feeChart) feeChart.destroy();
             if (cityStatsChart) cityStatsChart.destroy();
             if (pkbLevelChart) pkbLevelChart.destroy();
+            if (referralChart) referralChart.destroy();
 
             const filteredData = currentFilter === 'all' ? allData :
                 filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
@@ -1024,7 +1063,7 @@
             ];
 
             feeChart = new Chart(feeCtx, {
-                type: 'doughnut',  // hoặc 'pie' nếu bạn muốn biểu đồ tròn đặc
+                type: 'doughnut',
                 data: {
                     labels: memberTypeLabels,
                     datasets: [{
@@ -1234,6 +1273,92 @@
                                 },
                                 maxRotation: isMobile ? 45 : 0,
                                 minRotation: isMobile ? 45 : 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Referral Chart - Biểu đồ giới thiệu hội viên
+            const referralStats = processReferralData(filteredData);
+            const referralCtx = document.getElementById('referralChart').getContext('2d');
+
+            // Mảng màu gradient cho biểu đồ giới thiệu
+            const referralColors = [
+                'rgba(255, 215, 0, 0.8)',    // Vàng gold - Top 1
+                'rgba(192, 192, 192, 0.8)',  // Bạc - Top 2
+                'rgba(205, 127, 50, 0.8)',   // Đồng - Top 3
+                'rgba(54, 162, 235, 0.8)',   // Xanh dương
+                'rgba(75, 192, 192, 0.8)',   // Xanh lá
+                'rgba(153, 102, 255, 0.8)',  // Tím
+                'rgba(255, 159, 64, 0.8)',   // Cam
+                'rgba(255, 99, 132, 0.8)',   // Hồng
+                'rgba(201, 203, 207, 0.8)',  // Xám
+                'rgba(54, 72, 152, 0.8)'     // Xanh đậm
+            ];
+
+            const referralBackgroundColors = referralStats.labels.map(
+                (_, index) => referralColors[index % referralColors.length]
+            );
+
+            referralChart = new Chart(referralCtx, {
+                type: 'bar',
+                data: {
+                    labels: referralStats.labels,
+                    datasets: [{
+                        label: 'Số hội viên đã giới thiệu',
+                        data: referralStats.data,
+                        backgroundColor: referralBackgroundColors,
+                        borderColor: referralBackgroundColors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'y',
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: false
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'right',
+                            color: '#333',
+                            font: {
+                                weight: 'bold',
+                                size: isMobile ? 10 : 14
+                            },
+                            formatter: (value) => value.toLocaleString(),
+                            display: true,
+                            offset: 4,
+                            clamp: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                }
+                            },
+                            suggestedMax: Math.max(...referralStats.data) + 2
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                }
                             }
                         }
                     }
