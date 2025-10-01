@@ -13,7 +13,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -176,6 +176,14 @@
             display: none;
         }
 
+        .size-column {
+            transition: all 0.3s ease;
+        }
+
+        .size-column.hidden {
+            display: none;
+        }
+
         @media print {
 
             .controls,
@@ -215,6 +223,10 @@
                     <input type="checkbox" id="showPhoneCheckbox" checked onchange="togglePhoneColumn()">
                     <label for="showPhoneCheckbox">📱 Hiển thị số điện thoại</label>
                 </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showSizeCheckbox" checked onchange="toggleSizeColumn()">
+                    <label for="showSizeCheckbox">👕 Hiển thị size áo</label>
+                </div>
             </div>
         </div>
 
@@ -235,6 +247,7 @@
                     <th>STT</th>
                     <th>Tên hội viên</th>
                     <th class="phone-column">Điện thoại hội viên</th>
+                    <th class="size-column">Size áo</th>
                     <th>Giới tính</th>
                     <th>Trình PKB</th>
                     <th>Ghi chú</th>
@@ -255,6 +268,7 @@
         // Global data storage
         let currentData = [];
         let showPhoneColumn = true;
+        let showSizeColumn = true;
 
         // Function to toggle phone column visibility
         function togglePhoneColumn() {
@@ -264,6 +278,21 @@
             const phoneColumns = document.querySelectorAll('.phone-column');
             phoneColumns.forEach(column => {
                 if (showPhoneColumn) {
+                    column.classList.remove('hidden');
+                } else {
+                    column.classList.add('hidden');
+                }
+            });
+        }
+
+        // Function to toggle size column visibility
+        function toggleSizeColumn() {
+            const checkbox = document.getElementById('showSizeCheckbox');
+            showSizeColumn = checkbox.checked;
+            
+            const sizeColumns = document.querySelectorAll('.size-column');
+            sizeColumns.forEach(column => {
+                if (showSizeColumn) {
                     column.classList.remove('hidden');
                 } else {
                     column.classList.add('hidden');
@@ -312,6 +341,7 @@
                 gender: item['Giới tính'] || '',
                 level: parseFloat(item['Trình PKB']) || 0,
                 phone: item['Điện thoại hội viên'] || '',
+                size: item['Size áo'] || '',
                 notes: item['Ghi chú'] || '',
                 active: item['Active'] || ''
             })).filter(item => 
@@ -352,7 +382,7 @@
                 const maleHeaderRow = document.createElement('tr');
                 maleHeaderRow.className = 'section-header';
                 maleHeaderRow.innerHTML = `
-                    <td colspan="6"><strong>HẠNG MỤC NAM (${maleData.length} người)</strong></td>
+                    <td colspan="7"><strong>HẠNG MỤC NAM (${maleData.length} người)</strong></td>
                 `;
                 tableBody.appendChild(maleHeaderRow);
 
@@ -363,6 +393,7 @@
                         <td>${index + 1}</td>
                         <td>${item.name}</td>
                         <td class="phone-column">${item.phone}</td>
+                        <td class="size-column">${item.size}</td>
                         <td class="male-gender">NAM</td>
                         <td>${item.level}</td>
                         <td class="notes-cell"></td>
@@ -378,7 +409,7 @@
                 const femaleHeaderRow = document.createElement('tr');
                 femaleHeaderRow.className = 'section-header';
                 femaleHeaderRow.innerHTML = `
-                    <td colspan="6"><strong>HẠNG MỤC NỮ (${femaleData.length} người)</strong></td>
+                    <td colspan="7"><strong>HẠNG MỤC NỮ (${femaleData.length} người)</strong></td>
                 `;
                 tableBody.appendChild(femaleHeaderRow);
 
@@ -390,6 +421,7 @@
                         <td>${index + 1}</td>
                         <td>${item.name}</td>
                         <td class="phone-column">${item.phone}</td>
+                        <td class="size-column">${item.size}</td>
                         <td class="female-gender">NỮ</td>
                         <td>${item.level}</td>
                         <td class="notes-cell"></td>
@@ -403,8 +435,9 @@
             // Store current data globally
             currentData = allData;
 
-            // Apply phone column visibility
+            // Apply phone and size column visibility
             togglePhoneColumn();
+            toggleSizeColumn();
 
             return { total: allData.length, male: maleData.length, female: femaleData.length };
         }
@@ -451,12 +484,12 @@
             // Prepare data for Excel
             const excelData = [];
 
-            // Add headers - conditionally include phone column
-            if (showPhoneColumn) {
-                excelData.push(['STT', 'Tên hội viên', 'Điện thoại hội viên', 'Giới tính', 'Trình PKB', 'Ghi chú']);
-            } else {
-                excelData.push(['STT', 'Tên hội viên', 'Giới tính', 'Trình PKB', 'Ghi chú']);
-            }
+            // Add headers - conditionally include phone and size columns
+            const headers = ['STT', 'Tên hội viên'];
+            if (showPhoneColumn) headers.push('Điện thoại hội viên');
+            if (showSizeColumn) headers.push('Size áo');
+            headers.push('Giới tính', 'Trình PKB', 'Ghi chú');
+            excelData.push(headers);
 
             let sttMale = 1;
             let sttFemale = 1;
@@ -464,60 +497,47 @@
             // Add male section
             const maleData = currentData.filter(item => item.section === 'male');
             if (maleData.length > 0) {
-                if (showPhoneColumn) {
-                    excelData.push([`HẠNG MỤC NAM (${maleData.length} người)`, '', '', '', '', '']);
-                    maleData.forEach(item => {
-                        excelData.push([sttMale++, item.name, item.phone, 'NAM', item.level, '']);
-                    });
-                } else {
-                    excelData.push([`HẠNG MỤC NAM (${maleData.length} người)`, '', '', '', '']);
-                    maleData.forEach(item => {
-                        excelData.push([sttMale++, item.name, 'NAM', item.level, '']);
-                    });
-                }
-                excelData.push(Array(showPhoneColumn ? 6 : 5).fill('')); // Empty row
+                const headerRow = Array(headers.length).fill('');
+                headerRow[0] = `HẠNG MỤC NAM (${maleData.length} người)`;
+                excelData.push(headerRow);
+                
+                maleData.forEach(item => {
+                    const row = [sttMale++, item.name];
+                    if (showPhoneColumn) row.push(item.phone);
+                    if (showSizeColumn) row.push(item.size);
+                    row.push('NAM', item.level, '');
+                    excelData.push(row);
+                });
+                
+                excelData.push(Array(headers.length).fill('')); // Empty row
             }
 
             // Add female section
             const femaleData = currentData.filter(item => item.section === 'female');
             if (femaleData.length > 0) {
-                if (showPhoneColumn) {
-                    excelData.push([`HẠNG MỤC NỮ (${femaleData.length} người)`, '', '', '', '', '']);
-                    femaleData.forEach(item => {
-                        excelData.push([sttFemale++, item.name, item.phone, 'NỮ', item.level, '']);
-                    });
-                } else {
-                    excelData.push([`HẠNG MỤC NỮ (${femaleData.length} người)`, '', '', '', '']);
-                    femaleData.forEach(item => {
-                        excelData.push([sttFemale++, item.name, 'NỮ', item.level, '']);
-                    });
-                }
+                const headerRow = Array(headers.length).fill('');
+                headerRow[0] = `HẠNG MỤC NỮ (${femaleData.length} người)`;
+                excelData.push(headerRow);
+                
+                femaleData.forEach(item => {
+                    const row = [sttFemale++, item.name];
+                    if (showPhoneColumn) row.push(item.phone);
+                    if (showSizeColumn) row.push(item.size);
+                    row.push('NỮ', item.level, '');
+                    excelData.push(row);
+                });
             }
 
             // Create workbook and worksheet
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(excelData);
 
-            // Auto-fit columns based on phone column visibility
-            let colWidths;
-            if (showPhoneColumn) {
-                colWidths = [
-                    { width: 10 },  // STT
-                    { width: 25 },  // Tên hội viên
-                    { width: 15 },  // Điện thoại hội viên
-                    { width: 12 },  // Giới tính
-                    { width: 12 },  // Trình PKB
-                    { width: 15 }   // Ghi chú
-                ];
-            } else {
-                colWidths = [
-                    { width: 10 },  // STT
-                    { width: 25 },  // Tên hội viên
-                    { width: 12 },  // Giới tính
-                    { width: 12 },  // Trình PKB
-                    { width: 15 }   // Ghi chú
-                ];
-            }
+            // Auto-fit columns based on visible columns
+            const colWidths = [{ width: 10 }, { width: 25 }]; // STT, Tên hội viên
+            if (showPhoneColumn) colWidths.push({ width: 15 }); // Điện thoại hội viên
+            if (showSizeColumn) colWidths.push({ width: 10 }); // Size áo
+            colWidths.push({ width: 12 }, { width: 12 }, { width: 15 }); // Giới tính, Trình PKB, Ghi chú
+            
             ws['!cols'] = colWidths;
 
             // Add worksheet to workbook
