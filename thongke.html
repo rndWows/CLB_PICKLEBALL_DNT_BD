@@ -130,7 +130,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             min-height: 300px;
             overflow: hidden;
-            /* Tránh tràn */
             position: relative;
         }
 
@@ -145,6 +144,7 @@
             color: #1f2937;
             font-size: 0.8rem;
             padding: 0 0.25rem;
+            margin-bottom: 0.5rem;
         }
 
         .total-stats {
@@ -154,17 +154,25 @@
             transform: translate(-50%, -50%);
             text-align: center;
             pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .total-number {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             font-weight: bold;
             color: #1f2937;
+            line-height: 1.2;
         }
 
         .total-label {
             font-size: 0.75rem;
             color: #6b7280;
+            margin-top: 0.25rem;
+            line-height: 1.2;
         }
 
         #map {
@@ -216,7 +224,7 @@
             }
 
             .total-number {
-                font-size: 1.5rem;
+                font-size: 2rem;
             }
 
             .total-label {
@@ -245,6 +253,14 @@
             .chart-container.map-chart {
                 height: 300px !important;
                 max-height: 350px !important;
+            }
+
+            .total-number {
+                font-size: 1.25rem;
+            }
+
+            .total-label {
+                font-size: 0.7rem;
             }
         }
 
@@ -326,6 +342,10 @@
                 <div class="chart-title">THỐNG KÊ THÀNH TÍCH GIỚI THIỆU HỘI VIÊN</div>
                 <canvas id="referralChart"></canvas>
             </div>
+            <div class="chart-container">
+                <div class="chart-title">THỐNG KÊ TÀI TRỢ CLB</div>
+                <canvas id="sponsorChart"></canvas>
+            </div>
             <div class="chart-container map-chart">
                 <div class="chart-title">BẢN ĐỒ PHÂN BỐ HỘI VIÊN</div>
                 <div id="map"></div>
@@ -341,6 +361,7 @@
         const accessKey = 'V2-Rovhm-ZiLxx-msd7k-TSoig-NkECL-5LXEq-Kraws-yE09V';
         const region = 'www';
         let allData = [];
+        let allSponsorData = [];
         let currentFilter = 'all';
         const geocodeCache = new Map();
 
@@ -349,6 +370,7 @@
         let cityStatsChart = null;
         let pkbLevelChart = null;
         let referralChart = null;
+        let sponsorChart = null;
         let map;
         let markers = L.layerGroup();
 
@@ -381,7 +403,7 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: !isMobile, // Ẩn legend trên mobile
+                    display: !isMobile,
                     position: isMobile ? 'bottom' : 'top',
                     labels: {
                         boxWidth: isMobile ? 12 : 16,
@@ -437,7 +459,6 @@
             }
 
             if (!result) {
-                // Nếu không tìm thấy pattern, lấy phần đầu tiên của địa chỉ
                 result = cleanAddress.split(',')[0].trim();
             }
 
@@ -452,15 +473,12 @@
             try {
                 const normalizedAddress = normalizeAddress(address);
 
-                // Kiểm tra cache
                 if (geocodeCache.has(normalizedAddress)) {
                     return geocodeCache.get(normalizedAddress);
                 }
 
-                // Kiểm tra trong defaultCoords
                 for (const [city, coords] of Object.entries(defaultCoords)) {
                     if (normalizedAddress.toLowerCase().includes(city.toLowerCase())) {
-                        // Thêm một chút ngẫu nhiên để điểm không chồng lên nhau
                         const randomOffset = () => (Math.random() - 0.5) * 0.01;
                         const adjustedCoords = [
                             coords[0] + randomOffset(),
@@ -471,10 +489,9 @@
                     }
                 }
 
-                // Thử geocoding với Nominatim
                 for (let i = 0; i < retries; i++) {
                     try {
-                        await delay(delayMs * (i + 1)); // Tăng thời gian delay mỗi lần thử
+                        await delay(delayMs * (i + 1));
                         const response = await fetch(
                             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(normalizedAddress)}&limit=1&countrycodes=vn`
                         );
@@ -499,13 +516,11 @@
                     }
                 }
 
-                // Nếu không thể geocode, sử dụng tọa độ mặc định cho Bình Dương
                 const defaultCoord = [10.9804 + (Math.random() - 0.5) * 0.01, 106.6519 + (Math.random() - 0.5) * 0.01];
                 geocodeCache.set(normalizedAddress, defaultCoord);
                 return defaultCoord;
             } catch (error) {
                 console.error('Lỗi geocoding:', error);
-                // Trả về tọa độ mặc định với offset ngẫu nhiên
                 return [10.9804 + (Math.random() - 0.5) * 0.01, 106.6519 + (Math.random() - 0.5) * 0.01];
             }
         }
@@ -578,11 +593,16 @@
                     Selector: "Filter(HV_NCC_KH, true)"
                 });
 
+                const sponsorResponse = await apiRequest('TaiTroCLB', 'Find', {
+                    Selector: "Filter(TaiTroCLB, true)"
+                });
+
                 allData = memberResponse;
+                allSponsorData = sponsorResponse;
                 const months = getAvailableMonths(allData);
                 updateMonthFilter(months);
 
-                return { members: allData };
+                return { members: allData, sponsors: allSponsorData };
             } catch (error) {
                 console.error("Lỗi khi lấy dữ liệu:", error);
                 throw error;
@@ -630,7 +650,6 @@
 
             const formatMonth = (monthYear) => {
                 const [month, year] = monthYear.split('/');
-                // Nếu là mobile, chỉ hiển thị tháng để tiết kiệm không gian
                 return isMobile ? `T${month}` : `T${month}/${year}`;
             };
 
@@ -657,7 +676,6 @@
             const activeMembers = filteredData.filter(member => member.Active === "active");
             const addressGroups = new Map();
 
-            // Nhóm các member theo địa chỉ
             activeMembers.forEach(member => {
                 const address = member["Nơi ở hiện tại"] || "Không xác định";
                 if (!addressGroups.has(address)) {
@@ -666,13 +684,11 @@
                 addressGroups.get(address).push(member);
             });
 
-            // Tạo marker cho mỗi nhóm địa chỉ
             for (const [address, members] of addressGroups) {
                 try {
                     const coords = await geocodeAddressWithRetry(address);
 
                     if (coords) {
-                        // Điều chỉnh kích thước marker theo thiết bị
                         const baseSize = isMobile ? 20 : 25;
                         const maxSize = isMobile ? 30 : 40;
                         const markerSize = Math.min(baseSize + members.length * 2, maxSize);
@@ -697,7 +713,6 @@
                             })
                         });
 
-                        // Điều chỉnh nội dung popup cho mobile
                         const popupContent = `
                             <div class="map-marker-info" style="max-width: ${isMobile ? 200 : 250}px">
                                 <h3 style="font-size: ${isMobile ? 14 : 16}px; margin-bottom: 5px">${address}</h3>
@@ -716,7 +731,6 @@
                 }
             }
 
-            // Điều chỉnh view để hiển thị tất cả markers
             const markerBounds = L.featureGroup([...markers.getLayers()]).getBounds();
             if (markerBounds.isValid()) {
                 map.fitBounds(markerBounds, { padding: [30, 30] });
@@ -725,9 +739,8 @@
 
         function processCityStats(data) {
             const cityStats = new Map();
-            let otherCitiesCount = 0; // Biến đếm cho "Tỉnh thành khác"
+            let otherCitiesCount = 0;
 
-            // Định nghĩa các alias (tên gọi khác) cho các thành phố
             const cityAliases = {
                 'Thủ Dầu Một': ['TDM', 'Thu Dau Mot', 'ThuDauMot'],
                 'Thuận An': ['Thuan An', 'ThuanAn'],
@@ -742,17 +755,15 @@
             data.filter(member => member.Active === "active").forEach(member => {
                 const address = member["Nơi ở hiện tại"] || "";
                 const normalizedAddress = address.normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')  // Bỏ dấu
+                    .replace(/[\u0300-\u036f]/g, '')
                     .toUpperCase();
 
                 let foundCity = null;
 
-                // Tìm kiếm theo pattern chuẩn (TP., Thành phố, TX., etc.)
                 const cityPattern = /(TP\.|THANH PHO|TX\.|THI XA|HUYEN|H\.)\s*([\p{L}\s]+?)(?=,|$)/ui;
                 const match = normalizedAddress.match(cityPattern);
                 if (match) {
                     const cityName = match[2].trim();
-                    // Tìm tên thành phố tương ứng
                     for (const [city, aliases] of Object.entries(cityAliases)) {
                         if (aliases.some(alias => alias.toUpperCase().includes(cityName)) ||
                             cityName.includes(city.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase())) {
@@ -762,7 +773,6 @@
                     }
                 }
 
-                // Nếu không tìm thấy theo pattern, tìm trực tiếp trong địa chỉ
                 if (!foundCity) {
                     for (const [city, aliases] of Object.entries(cityAliases)) {
                         if (aliases.some(alias => normalizedAddress.includes(alias.toUpperCase())) ||
@@ -773,16 +783,13 @@
                     }
                 }
 
-                // Nếu vẫn không tìm thấy, kiểm tra xem có phường/xã của thành phố nào không
                 if (!foundCity) {
-                    // Thêm mapping phường/xã với thành phố tương ứng
                     const wardCityMapping = {
                         'PHU HOA': 'Thủ Dầu Một',
                         'PHU CUONG': 'Thủ Dầu Một',
                         'BINH THANG': 'Dĩ An',
                         'TAN DONG HIEP': 'Dĩ An',
                         'AN PHU': 'Thuận An',
-                        // Thêm các phường/xã khác tương ứng với thành phố
                     };
 
                     for (const [ward, city] of Object.entries(wardCityMapping)) {
@@ -793,24 +800,20 @@
                     }
                 }
 
-                // Thêm vào thống kê
                 if (foundCity) {
                     if (!cityStats.has(foundCity)) {
                         cityStats.set(foundCity, 0);
                     }
                     cityStats.set(foundCity, cityStats.get(foundCity) + 1);
                 } else {
-                    // Nếu không xác định được thành phố, tính vào "Tỉnh thành khác"
                     otherCitiesCount++;
                 }
             });
 
-            // Thêm "Tỉnh thành khác" vào thống kê nếu có
             if (otherCitiesCount > 0) {
                 cityStats.set("Tỉnh thành khác", otherCitiesCount);
             }
 
-            // Sắp xếp theo số lượng giảm dần
             const sortedStats = Array.from(cityStats.entries())
                 .sort((a, b) => b[1] - a[1]);
 
@@ -820,16 +823,12 @@
             };
         }
 
-        // Thêm function để xuất danh sách hội viên ra file Excel
         function exportMemberList() {
-            // Lọc data theo filter hiện tại
             const filteredData = currentFilter === 'all' ? allData :
                 filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
 
-            // Lọc chỉ lấy hội viên đang hoạt động
             const activeMembers = filteredData.filter(member => member.Active === "active");
 
-            // Chuẩn bị dữ liệu để xuất
             const headers = [
                 "STT", "Tên hội viên", "Giới tính", "Loại Hội Viên", "Trình PKB", "Ngày tham gia hội",
                 "Nơi ở hiện tại", "Số điện thoại", "Trạng thái hội phí", "Ngày đóng hội phí"
@@ -848,22 +847,17 @@
                 member["Ngày đóng hội phí mới"] ? new Date(member["Ngày đóng hội phí mới"]).toLocaleDateString('vi-VN') : ""
             ]);
 
-            // Tạo workbook và worksheet
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
 
-            // Thiết lập độ rộng cột
             const colWidths = [5, 15, 30, 15, 40, 15, 20];
             ws['!cols'] = colWidths.map(width => ({ width }));
 
-            // Thêm worksheet vào workbook
             XLSX.utils.book_append_sheet(wb, ws, "Danh sách hội viên");
 
-            // Tạo tên file với thời gian hiện tại
             const now = new Date();
             const fileName = `Danh_sach_hoi_vien_${now.getDate()}_${now.getMonth() + 1}_${now.getFullYear()}.xlsx`;
 
-            // Xuất file
             XLSX.writeFile(wb, fileName);
         }
 
@@ -878,27 +872,18 @@
                 levelStats.set(level, levelStats.get(level) + 1);
             });
 
-            // Custom sorting function for pickleball levels
             function getSortValue(level) {
-                // Handle special case for "1.0-2.0" to sort correctly
-                if (level === "1.0-2.0") return 1.5; // Average of range to put it between 1.0 and 2.0
-
-                // Try to parse as a number for numeric levels
+                if (level === "1.0-2.0") return 1.5;
                 const numValue = parseFloat(level);
                 if (!isNaN(numValue)) return numValue;
-
-                // For non-numeric levels, assign values to maintain sensible order
                 if (level === "Beginner") return 1.0;
                 if (level === "Intermediate") return 3.0;
                 if (level === "Advanced") return 4.0;
                 if (level === "Pro") return 5.0;
-                if (level === "Chưa xác định") return 999; // Sort to end
-
-                // Default for any other case
+                if (level === "Chưa xác định") return 999;
                 return 998;
             }
 
-            // Sort by the calculated numeric values
             const sortedStats = Array.from(levelStats.entries())
                 .sort((a, b) => getSortValue(a[0]) - getSortValue(b[0]));
 
@@ -910,16 +895,14 @@
 
         function processReferralData(data) {
             const referralStats = new Map();
-            
-            // Tạo map để tra cứu tên từ mã
+
             const memberCodeToName = new Map();
             data.forEach(member => {
                 if (member["Mã"] && member["Tên hội viên"]) {
                     memberCodeToName.set(member["Mã"], member["Tên hội viên"]);
                 }
             });
-            
-            // Đếm số lượng giới thiệu
+
             data.filter(member => member.Active === "active").forEach(member => {
                 const referrerCode = member["Người giới thiệu"];
                 if (referrerCode) {
@@ -930,25 +913,70 @@
                     referralStats.set(referrerName, referralStats.get(referrerName) + 1);
                 }
             });
-            
-            // Sắp xếp theo số lượng giảm dần và lấy top 10
+
             const sortedStats = Array.from(referralStats.entries())
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
-            
+
             return {
                 labels: sortedStats.map(([name]) => name),
                 data: sortedStats.map(([, count]) => count)
             };
         }
 
-        // Điều chỉnh renderCharts cho responsive
+        function processSponsorData(sponsorData, memberData) {
+            const sponsorStats = new Map();
+
+            // Tạo map để tra cứu tên từ mã
+            const memberCodeToName = new Map();
+            memberData.forEach(member => {
+                if (member["Mã"] && member["Tên hội viên"]) {
+                    memberCodeToName.set(member["Mã"], member["Tên hội viên"]);
+                }
+            });
+
+            // Lọc và tính toán tài trợ
+            const filteredSponsors = currentFilter === 'all' ? sponsorData :
+                filterDataByMonth(sponsorData, currentFilter, "Ngày tài trợ");
+
+            filteredSponsors.forEach(sponsor => {
+                let sponsorName = sponsor["Nhà tài trợ bên ngoài"] || "";
+                
+                // Nếu không có nhà tài trợ bên ngoài, lấy tên hội viên
+                if (!sponsorName && sponsor["Tên hội viên tài trợ"]) {
+                    sponsorName = memberCodeToName.get(sponsor["Tên hội viên tài trợ"]) || sponsor["Tên hội viên tài trợ"];
+                }
+
+                if (sponsorName) {
+                    if (!sponsorStats.has(sponsorName)) {
+                        sponsorStats.set(sponsorName, 0);
+                    }
+
+                    // Tính tổng tiền tài trợ (hiện kim + hiện vật)
+                    const cashAmount = parseFloat(sponsor["Số tiền hiện kim"]) || 0;
+                    const kindAmount = parseFloat(sponsor["Số tiền hiện vật quy đổi"]) || 0;
+                    sponsorStats.set(sponsorName, sponsorStats.get(sponsorName) + cashAmount + kindAmount);
+                }
+            });
+
+            // Sắp xếp theo số tiền giảm dần và lấy top 10
+            const sortedStats = Array.from(sponsorStats.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            return {
+                labels: sortedStats.map(([name]) => name),
+                data: sortedStats.map(([, amount]) => amount)
+            };
+        }
+
         async function renderCharts() {
             if (growthChart) growthChart.destroy();
             if (feeChart) feeChart.destroy();
             if (cityStatsChart) cityStatsChart.destroy();
             if (pkbLevelChart) pkbLevelChart.destroy();
             if (referralChart) referralChart.destroy();
+            if (sponsorChart) sponsorChart.destroy();
 
             const filteredData = currentFilter === 'all' ? allData :
                 filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
@@ -1034,14 +1062,12 @@
                 }
             });
 
-            // Biểu đồ tròn cho phân loại hội viên
+            // Fee Chart - Biểu đồ tròn cho phân loại hội viên
             const feeCtx = document.getElementById('feeChart').getContext('2d');
 
-            // Tính tổng số lượng của mỗi loại hội viên
             const memberTypeCounts = {};
             filteredData.filter(member => member.Active === "active").forEach(member => {
                 const type = member["Loại Hội Viên"] || "Khác";
-                // Đơn giản hóa phân loại 
                 const memberType = type === "DNT BD" ? "DNT BD" :
                     (type === "HV ngoài" ? "HV ngoài" : "Khác");
 
@@ -1051,15 +1077,13 @@
                 memberTypeCounts[memberType]++;
             });
 
-            // Chuẩn bị dữ liệu cho biểu đồ tròn
             const memberTypeLabels = Object.keys(memberTypeCounts);
             const memberTypeData = Object.values(memberTypeCounts);
 
-            // Mảng màu cho các loại hội viên
             const memberTypeColors = [
-                'rgba(54, 162, 235, 0.8)',  // HV ngoài - Xanh dương
-                'rgba(75, 192, 192, 0.8)',  // DNT BD - Xanh lá
-                'rgba(255, 159, 64, 0.8)'   // Khác - Cam
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 159, 64, 0.8)'
             ];
 
             feeChart = new Chart(feeCtx, {
@@ -1084,7 +1108,8 @@
                                 boxWidth: isMobile ? 10 : 16,
                                 font: {
                                     size: isMobile ? 10 : 12
-                                }
+                                },
+                                padding: isMobile ? 8 : 12
                             }
                         },
                         datalabels: {
@@ -1100,7 +1125,7 @@
                             }
                         }
                     },
-                    cutout: isMobile ? '50%' : '40%'
+                    cutout: isMobile ? '60%' : '65%'
                 }
             });
 
@@ -1111,19 +1136,17 @@
             const cityStats = processCityStats(filteredData);
             const cityStatsCtx = document.getElementById('cityStatsChart').getContext('2d');
 
-            // Tạo mảng màu riêng cho từng thành phố
             const cityColors = [
-                'rgba(54, 162, 235, 0.8)',  // Xanh dương
-                'rgba(75, 192, 192, 0.8)',  // Xanh lá
-                'rgba(255, 159, 64, 0.8)',  // Cam
-                'rgba(153, 102, 255, 0.8)', // Tím
-                'rgba(255, 99, 132, 0.8)',  // Hồng
-                'rgba(255, 205, 86, 0.8)',  // Vàng
-                'rgba(201, 203, 207, 0.8)', // Xám
-                'rgba(54, 72, 152, 0.8)'    // Xanh đậm
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 159, 64, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(255, 205, 86, 0.8)',
+                'rgba(201, 203, 207, 0.8)',
+                'rgba(54, 72, 152, 0.8)'
             ];
 
-            // Đảm bảo có đủ màu cho tất cả các thành phố
             const backgroundColors = cityStats.labels.map(
                 (_, index) => cityColors[index % cityColors.length]
             );
@@ -1192,28 +1215,26 @@
                 }
             });
 
-            // Biểu đồ Trình PKB
+            // PKB Level Chart
             const pkbLevelStats = processSkillLevelData(filteredData);
             const pkbLevelCtx = document.getElementById('pkbLevelChart').getContext('2d');
 
-            // Mảng màu khác nhau cho từng cấp độ
             const levelColors = [
-                'rgba(255, 99, 132, 0.8)',    // 1.0-2.0 - Hồng
-                'rgba(255, 159, 64, 0.8)',    // 2.0 - Cam
-                'rgba(255, 205, 86, 0.8)',    // 2.5 - Vàng
-                'rgba(75, 192, 192, 0.8)',    // 3.0 - Xanh lá
-                'rgba(54, 162, 235, 0.8)',    // 3.5 - Xanh dương
-                'rgba(153, 102, 255, 0.8)',   // 4.0 - Tím
-                'rgba(201, 203, 207, 0.8)',   // 4.5 - Xám
-                'rgba(136, 45, 23, 0.8)',     // 5.0 - Nâu
-                'rgba(205, 127, 50, 0.8)',    // Pro - Đồng
-                'rgba(0, 128, 0, 0.8)',       // Beginner - Xanh lá đậm
-                'rgba(0, 0, 139, 0.8)',       // Intermediate - Xanh dương đậm
-                'rgba(255, 0, 0, 0.8)',       // Advanced - Đỏ
-                'rgba(169, 169, 169, 0.8)'    // Chưa xác định - Xám nhạt
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(255, 159, 64, 0.8)',
+                'rgba(255, 205, 86, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(201, 203, 207, 0.8)',
+                'rgba(136, 45, 23, 0.8)',
+                'rgba(205, 127, 50, 0.8)',
+                'rgba(0, 128, 0, 0.8)',
+                'rgba(0, 0, 139, 0.8)',
+                'rgba(255, 0, 0, 0.8)',
+                'rgba(169, 169, 169, 0.8)'
             ];
 
-            // Đảm bảo mỗi cột có một màu khác nhau
             const backgroundColors1 = pkbLevelStats.labels.map((label, index) => {
                 return levelColors[index % levelColors.length];
             });
@@ -1279,22 +1300,21 @@
                 }
             });
 
-            // Referral Chart - Biểu đồ giới thiệu hội viên
+            // Referral Chart
             const referralStats = processReferralData(filteredData);
             const referralCtx = document.getElementById('referralChart').getContext('2d');
 
-            // Mảng màu gradient cho biểu đồ giới thiệu
             const referralColors = [
-                'rgba(255, 215, 0, 0.8)',    // Vàng gold - Top 1
-                'rgba(192, 192, 192, 0.8)',  // Bạc - Top 2
-                'rgba(205, 127, 50, 0.8)',   // Đồng - Top 3
-                'rgba(54, 162, 235, 0.8)',   // Xanh dương
-                'rgba(75, 192, 192, 0.8)',   // Xanh lá
-                'rgba(153, 102, 255, 0.8)',  // Tím
-                'rgba(255, 159, 64, 0.8)',   // Cam
-                'rgba(255, 99, 132, 0.8)',   // Hồng
-                'rgba(201, 203, 207, 0.8)',  // Xám
-                'rgba(54, 72, 152, 0.8)'     // Xanh đậm
+                'rgba(255, 215, 0, 0.8)',
+                'rgba(192, 192, 192, 0.8)',
+                'rgba(205, 127, 50, 0.8)',
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(255, 159, 64, 0.8)',
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(201, 203, 207, 0.8)',
+                'rgba(54, 72, 152, 0.8)'
             ];
 
             const referralBackgroundColors = referralStats.labels.map(
@@ -1365,6 +1385,98 @@
                 }
             });
 
+            // Sponsor Chart - Biểu đồ tài trợ
+            const sponsorStats = processSponsorData(allSponsorData, allData);
+            const sponsorCtx = document.getElementById('sponsorChart').getContext('2d');
+
+            const sponsorColors = [
+                'rgba(255, 215, 0, 0.8)',    // Vàng gold
+                'rgba(192, 192, 192, 0.8)',  // Bạc
+                'rgba(205, 127, 50, 0.8)',   // Đồng
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(255, 159, 64, 0.8)',
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(201, 203, 207, 0.8)',
+                'rgba(54, 72, 152, 0.8)'
+            ];
+
+            const sponsorBackgroundColors = sponsorStats.labels.map(
+                (_, index) => sponsorColors[index % sponsorColors.length]
+            );
+
+            sponsorChart = new Chart(sponsorCtx, {
+                type: 'bar',
+                data: {
+                    labels: sponsorStats.labels,
+                    datasets: [{
+                        label: 'Tổng số tiền tài trợ (VNĐ)',
+                        data: sponsorStats.data,
+                        backgroundColor: sponsorBackgroundColors,
+                        borderColor: sponsorBackgroundColors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'y',
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: false
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'right',
+                            color: '#333',
+                            font: {
+                                weight: 'bold',
+                                size: isMobile ? 10 : 14
+                            },
+                            formatter: (value) => {
+                                // Format số tiền với dấu phẩy
+                                return value.toLocaleString('vi-VN');
+                            },
+                            display: true,
+                            offset: 4,
+                            clamp: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                },
+                                callback: function(value) {
+                                    // Format trục x với dấu phẩy
+                                    return value.toLocaleString('vi-VN');
+                                }
+                            },
+                            suggestedMax: Math.max(...sponsorStats.data) * 1.1
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
             // Update map
             await updateMap(filteredData);
         }
@@ -1374,13 +1486,10 @@
             renderCharts();
         });
 
-        // Thêm event listener cho resize để cập nhật biểu đồ khi xoay màn hình
         window.addEventListener('resize', function () {
-            // Cập nhật biến isMobile
             const wasIsMobile = isMobile;
             isMobile = window.innerWidth < 768;
 
-            // Chỉ render lại chart nếu kích thước màn hình thay đổi qua ngưỡng mobile/desktop
             if (wasIsMobile !== isMobile) {
                 renderCharts();
             }
