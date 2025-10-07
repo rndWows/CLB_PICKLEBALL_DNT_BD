@@ -939,9 +939,9 @@
                 filterDataByMonth(sponsorData, currentFilter, "Ngày tài trợ");
 
             filteredSponsors.forEach(sponsor => {
-                let sponsorName = sponsor["Nhà tài trợ bên ngoài"] || "";
+                let sponsorName = sponsor["Tên nhà tài trợ bên ngoài"] || "";
                 
-                // Nếu không có nhà tài trợ bên ngoài, lấy tên hội viên
+                // Nếu không có Tên nhà tài trợ bên ngoài, lấy tên hội viên
                 if (!sponsorName && sponsor["Tên hội viên tài trợ"]) {
                     sponsorName = memberCodeToName.get(sponsor["Tên hội viên tài trợ"]) || sponsor["Tên hội viên tài trợ"];
                 }
