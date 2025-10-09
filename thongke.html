@@ -39,21 +39,40 @@
         .filter-container {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.75rem;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 1rem;
         }
-
 
         .filter-group {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .date-range-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .date-range-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 150px;
         }
 
         .button-group {
             display: flex;
             flex-direction: row;
             gap: 0.5rem;
-            justify-content: space-between;
+            align-items: flex-end;
         }
 
         canvas {
@@ -61,8 +80,6 @@
             height: auto !important;
             display: block;
         }
-
-
 
         /* Style cho nút */
         .nav-button {
@@ -76,8 +93,6 @@
             cursor: pointer;
             transition: background-color 0.2s ease;
             white-space: nowrap;
-            flex: 1;
-            text-align: center;
             height: 36px;
         }
 
@@ -87,6 +102,42 @@
 
         .nav-button:active {
             transform: translateY(1px);
+        }
+
+        .apply-button {
+            background-color: #10B981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+            height: 36px;
+        }
+
+        .apply-button:hover {
+            background-color: #059669;
+        }
+
+        .reset-button {
+            background-color: #6B7280;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+            height: 36px;
+        }
+
+        .reset-button:hover {
+            background-color: #4B5563;
         }
 
         .filter-label {
@@ -133,9 +184,12 @@
             position: relative;
         }
 
-
         .chart-container.map-chart {
             height: 400px;
+        }
+
+        .chart-container.full-width {
+            grid-column: 1 / -1;
         }
 
         .chart-title {
@@ -148,7 +202,7 @@
 
         .total-stats {
             position: absolute;
-            top: 50%;
+            top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
@@ -195,22 +249,8 @@
                 padding: 1rem;
             }
 
-            .filter-container {
-                padding: 0.75rem;
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                gap: 1rem;
-            }
-
-            .filter-group {
-                flex-direction: row;
-                align-items: center;
-            }
-
             .filter-select {
-                width: auto;
-                min-width: 200px;
+                min-width: 180px;
             }
 
             .chart-container {
@@ -230,7 +270,9 @@
                 font-size: 0.875rem;
             }
 
-            .nav-button {
+            .nav-button,
+            .apply-button,
+            .reset-button {
                 padding: 0.5rem 1rem;
                 font-size: 0.9rem;
                 height: 38px;
@@ -238,6 +280,25 @@
         }
 
         @media (max-width: 767px) {
+            .filter-container {
+                flex-direction: column;
+            }
+
+            .date-range-group {
+                flex-direction: column;
+            }
+
+            .button-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .nav-button,
+            .apply-button,
+            .reset-button {
+                width: 100%;
+            }
+
             .chart-container {
                 min-height: auto !important;
                 height: auto !important;
@@ -299,16 +360,24 @@
 <body>
     <div class="dashboard">
         <div class="filter-container">
-            <div class="filter-group">
-                <label class="filter-label" for="monthFilter">Xem theo tháng:</label>
-                <select id="monthFilter" class="filter-select">
-                    <option value="all">Tất cả thời gian</option>
-                </select>
+            <div class="date-range-group">
+                <div class="date-range-item">
+                    <label class="filter-label" for="fromMonth">Từ tháng:</label>
+                    <select id="fromMonth" class="filter-select">
+                        <option value="">Chọn tháng bắt đầu</option>
+                    </select>
+                </div>
+                <div class="date-range-item">
+                    <label class="filter-label" for="toMonth">Đến tháng:</label>
+                    <select id="toMonth" class="filter-select">
+                        <option value="">Chọn tháng kết thúc</option>
+                    </select>
+                </div>
             </div>
             <div class="button-group">
-                <button class="nav-button" onclick="exportMemberList()">
-                    Xuất danh sách
-                </button>
+                <button class="apply-button" onclick="applyFilter()">Áp dụng</button>
+                <button class="reset-button" onclick="resetFilter()">Đặt lại</button>
+                <button class="nav-button" onclick="exportMemberList()">Xuất danh sách</button>
                 <button class="nav-button"
                     onclick="window.location.href='https://rndwows.github.io/CLB_PICKLEBALL_DNT_BD/thuchitonquy.html'">
                     Thu chi
@@ -345,6 +414,10 @@
                 <div class="chart-title">THỐNG KÊ TÀI TRỢ CLB</div>
                 <canvas id="sponsorChart"></canvas>
             </div>
+            <div class="chart-container full-width">
+                <div class="chart-title">THỐNG KÊ GIAO DỊCH KẾT NỐI VÀ THƯỞNG</div>
+                <canvas id="transactionChart"></canvas>
+            </div>
             <div class="chart-container map-chart">
                 <div class="chart-title">BẢN ĐỒ PHÂN BỐ HỘI VIÊN</div>
                 <div id="map"></div>
@@ -361,7 +434,9 @@
         const region = 'www';
         let allData = [];
         let allSponsorData = [];
-        let currentFilter = 'all';
+        let allTransactionData = [];
+        let currentFromMonth = null;
+        let currentToMonth = null;
         const geocodeCache = new Map();
 
         let growthChart = null;
@@ -370,6 +445,7 @@
         let pkbLevelChart = null;
         let referralChart = null;
         let sponsorChart = null;
+        let transactionChart = null;
         let map;
         let markers = L.layerGroup();
 
@@ -390,11 +466,12 @@
             green: ['rgba(75, 192, 192, 0.8)', 'rgba(75, 192, 192, 0.2)'],
             orange: ['rgba(255, 159, 64, 0.8)', 'rgba(255, 159, 64, 0.2)'],
             purple: ['rgba(153, 102, 255, 0.8)', 'rgba(153, 102, 255, 0.2)'],
-            red: ['rgba(255, 99, 132, 0.8)', 'rgba(255, 99, 132, 0.2)']
+            red: ['rgba(255, 99, 132, 0.8)', 'rgba(255, 99, 132, 0.2)'],
+            teal: ['rgba(20, 184, 166, 0.8)', 'rgba(20, 184, 166, 0.2)']
         };
 
         // Kiểm tra nếu là thiết bị di động
-        const isMobile = window.innerWidth < 768;
+        let isMobile = window.innerWidth < 768;
 
         // Tùy chỉnh options dựa trên thiết bị
         const commonOptions = {
@@ -561,29 +638,92 @@
             return getLast12Months();
         }
 
-        function updateMonthFilter(months) {
-            const monthFilter = document.getElementById('monthFilter');
-            monthFilter.innerHTML = '<option value="all">Tất cả thời gian</option>';
+        function updateMonthFilters(months) {
+            const fromMonth = document.getElementById('fromMonth');
+            const toMonth = document.getElementById('toMonth');
+
+            fromMonth.innerHTML = '<option value="">Chọn tháng bắt đầu</option>';
+            toMonth.innerHTML = '<option value="">Chọn tháng kết thúc</option>';
 
             months.forEach(month => {
-                const option = document.createElement('option');
-                option.value = month;
                 const [month_num, year] = month.split('/');
                 const monthName = new Date(year, month_num - 1).toLocaleString('vi-VN', { month: 'long' });
-                option.textContent = `${monthName} ${year}`;
-                monthFilter.appendChild(option);
+
+                const fromOption = document.createElement('option');
+                fromOption.value = month;
+                fromOption.textContent = `${monthName} ${year}`;
+                fromMonth.appendChild(fromOption);
+
+                const toOption = document.createElement('option');
+                toOption.value = month;
+                toOption.textContent = `${monthName} ${year}`;
+                toMonth.appendChild(toOption);
             });
         }
 
-        function filterDataByMonth(data, month, dateField) {
-            if (month === 'all') return data;
+        function filterDataByDateRange(data, fromMonth, toMonth, dateField) {
+            if (!fromMonth && !toMonth) return data;
 
-            const [filterMonth, filterYear] = month.split('/');
             return data.filter(item => {
                 const date = new Date(item[dateField]);
-                return (date.getMonth() + 1) === parseInt(filterMonth) &&
-                    date.getFullYear() === parseInt(filterYear);
+                const itemMonth = date.getMonth() + 1;
+                const itemYear = date.getFullYear();
+                const itemMonthYear = `${itemMonth}/${itemYear}`;
+
+                if (fromMonth && toMonth) {
+                    const [fromM, fromY] = fromMonth.split('/').map(Number);
+                    const [toM, toY] = toMonth.split('/').map(Number);
+
+                    const itemDate = new Date(itemYear, itemMonth - 1);
+                    const fromDate = new Date(fromY, fromM - 1);
+                    const toDate = new Date(toY, toM - 1);
+
+                    return itemDate >= fromDate && itemDate <= toDate;
+                } else if (fromMonth) {
+                    const [fromM, fromY] = fromMonth.split('/').map(Number);
+                    const fromDate = new Date(fromY, fromM - 1);
+                    const itemDate = new Date(itemYear, itemMonth - 1);
+                    return itemDate >= fromDate;
+                } else if (toMonth) {
+                    const [toM, toY] = toMonth.split('/').map(Number);
+                    const toDate = new Date(toY, toM - 1);
+                    const itemDate = new Date(itemYear, itemMonth - 1);
+                    return itemDate <= toDate;
+                }
+
+                return true;
             });
+        }
+
+        function applyFilter() {
+            const fromMonth = document.getElementById('fromMonth').value;
+            const toMonth = document.getElementById('toMonth').value;
+
+            // Validate: tháng bắt đầu phải trước tháng kết thúc
+            if (fromMonth && toMonth) {
+                const [fromM, fromY] = fromMonth.split('/').map(Number);
+                const [toM, toY] = toMonth.split('/').map(Number);
+
+                const fromDate = new Date(fromY, fromM - 1);
+                const toDate = new Date(toY, toM - 1);
+
+                if (fromDate > toDate) {
+                    alert('Tháng bắt đầu phải trước hoặc bằng tháng kết thúc!');
+                    return;
+                }
+            }
+
+            currentFromMonth = fromMonth || null;
+            currentToMonth = toMonth || null;
+            renderCharts();
+        }
+
+        function resetFilter() {
+            document.getElementById('fromMonth').value = '';
+            document.getElementById('toMonth').value = '';
+            currentFromMonth = null;
+            currentToMonth = null;
+            renderCharts();
         }
 
         async function fetchData() {
@@ -596,12 +736,17 @@
                     Selector: "Filter(TaiTroCLB, true)"
                 });
 
+                const transactionResponse = await apiRequest('KETNOI GIAOTHUONG', 'Find', {
+                    Selector: "Filter(KETNOI GIAOTHUONG, true)"
+                });
+
                 allData = memberResponse;
                 allSponsorData = sponsorResponse;
+                allTransactionData = transactionResponse;
                 const months = getAvailableMonths(allData);
-                updateMonthFilter(months);
+                updateMonthFilters(months);
 
-                return { members: allData, sponsors: allSponsorData };
+                return { members: allData, sponsors: allSponsorData, transactions: allTransactionData };
             } catch (error) {
                 console.error("Lỗi khi lấy dữ liệu:", error);
                 throw error;
@@ -620,8 +765,7 @@
             }
 
             const last12Months = getLast12Months();
-            const filteredData = currentFilter === 'all' ? data :
-                filterDataByMonth(data, currentFilter, "Ngày tham gia hội");
+            const filteredData = filterDataByDateRange(data, currentFromMonth, currentToMonth, "Ngày tham gia hội");
 
             const activeMembers = filteredData.filter(member => member.Active === "active");
             const monthlyData = last12Months.reduce((acc, month) => {
@@ -823,8 +967,7 @@
         }
 
         function exportMemberList() {
-            const filteredData = currentFilter === 'all' ? allData :
-                filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
+            const filteredData = filterDataByDateRange(allData, currentFromMonth, currentToMonth, "Ngày tham gia hội");
 
             const activeMembers = filteredData.filter(member => member.Active === "active");
 
@@ -926,7 +1069,6 @@
         function processSponsorData(sponsorData, memberData) {
             const sponsorStats = new Map();
 
-            // Tạo map để tra cứu tên từ mã
             const memberCodeToName = new Map();
             memberData.forEach(member => {
                 if (member["Mã"] && member["Tên hội viên"]) {
@@ -934,14 +1076,11 @@
                 }
             });
 
-            // Lọc và tính toán tài trợ
-            const filteredSponsors = currentFilter === 'all' ? sponsorData :
-                filterDataByMonth(sponsorData, currentFilter, "Ngày tài trợ");
+            const filteredSponsors = filterDataByDateRange(sponsorData, currentFromMonth, currentToMonth, "Ngày tài trợ");
 
             filteredSponsors.forEach(sponsor => {
                 let sponsorName = sponsor["Tên nhà tài trợ bên ngoài"] || "";
-                
-                // Nếu không có Tên nhà tài trợ bên ngoài, lấy tên hội viên
+
                 if (!sponsorName && sponsor["Tên hội viên tài trợ"]) {
                     sponsorName = memberCodeToName.get(sponsor["Tên hội viên tài trợ"]) || sponsor["Tên hội viên tài trợ"];
                 }
@@ -951,14 +1090,12 @@
                         sponsorStats.set(sponsorName, 0);
                     }
 
-                    // Tính tổng tiền tài trợ (hiện kim + hiện vật)
                     const cashAmount = parseFloat(sponsor["Số tiền hiện kim"]) || 0;
                     const kindAmount = parseFloat(sponsor["Số tiền hiện vật quy đổi"]) || 0;
                     sponsorStats.set(sponsorName, sponsorStats.get(sponsorName) + cashAmount + kindAmount);
                 }
             });
 
-            // Sắp xếp theo số tiền giảm dần và lấy top 10
             const sortedStats = Array.from(sponsorStats.entries())
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
@@ -969,6 +1106,55 @@
             };
         }
 
+        function processTransactionData(transactionData) {
+            function getLast12Months() {
+                const months = [];
+                const today = new Date();
+                for (let i = 0; i < 12; i++) {
+                    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                    months.unshift(`${d.getMonth() + 1}/${d.getFullYear()}`);
+                }
+                return months;
+            }
+
+            const last12Months = getLast12Months();
+            const filteredTransactions = filterDataByDateRange(transactionData, currentFromMonth, currentToMonth, "Ngày");
+
+            // Khởi tạo dữ liệu cho 12 tháng
+            const monthlyData = last12Months.reduce((acc, month) => {
+                acc[month] = {
+                    transactionValue: 0,
+                    reward: 0
+                };
+                return acc;
+            }, {});
+
+            // Tổng hợp dữ liệu theo tháng
+            filteredTransactions.forEach(transaction => {
+                const date = new Date(transaction["Ngày"]);
+                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+
+                if (monthlyData.hasOwnProperty(monthYear)) {
+                    const transactionValue = parseFloat(transaction["Giá trị giao dịch thành công"]) || 0;
+                    const reward = parseFloat(transaction["Thưởng cho TK CLB"]) || 0;
+
+                    monthlyData[monthYear].transactionValue += transactionValue;
+                    monthlyData[monthYear].reward += reward;
+                }
+            });
+
+            const formatMonth = (monthYear) => {
+                const [month, year] = monthYear.split('/');
+                return isMobile ? `T${month}` : `T${month}/${year}`;
+            };
+
+            return {
+                labels: last12Months.map(month => formatMonth(month)),
+                transactionValues: last12Months.map(month => monthlyData[month].transactionValue),
+                rewards: last12Months.map(month => monthlyData[month].reward)
+            };
+        }
+
         async function renderCharts() {
             if (growthChart) growthChart.destroy();
             if (feeChart) feeChart.destroy();
@@ -976,9 +1162,9 @@
             if (pkbLevelChart) pkbLevelChart.destroy();
             if (referralChart) referralChart.destroy();
             if (sponsorChart) sponsorChart.destroy();
+            if (transactionChart) transactionChart.destroy();
 
-            const filteredData = currentFilter === 'all' ? allData :
-                filterDataByMonth(allData, currentFilter, "Ngày tham gia hội");
+            const filteredData = filterDataByDateRange(allData, currentFromMonth, currentToMonth, "Ngày tham gia hội");
 
             // Growth Chart
             const growthData = processGrowthData(filteredData);
@@ -1061,7 +1247,7 @@
                 }
             });
 
-            // Fee Chart - Biểu đồ tròn cho phân loại hội viên
+            // Fee Chart
             const feeCtx = document.getElementById('feeChart').getContext('2d');
 
             const memberTypeCounts = {};
@@ -1384,14 +1570,14 @@
                 }
             });
 
-            // Sponsor Chart - Biểu đồ tài trợ
+            // Sponsor Chart
             const sponsorStats = processSponsorData(allSponsorData, allData);
             const sponsorCtx = document.getElementById('sponsorChart').getContext('2d');
 
             const sponsorColors = [
-                'rgba(255, 215, 0, 0.8)',    // Vàng gold
-                'rgba(192, 192, 192, 0.8)',  // Bạc
-                'rgba(205, 127, 50, 0.8)',   // Đồng
+                'rgba(255, 215, 0, 0.8)',
+                'rgba(192, 192, 192, 0.8)',
+                'rgba(205, 127, 50, 0.8)',
                 'rgba(54, 162, 235, 0.8)',
                 'rgba(75, 192, 192, 0.8)',
                 'rgba(153, 102, 255, 0.8)',
@@ -1437,7 +1623,6 @@
                                 size: isMobile ? 10 : 14
                             },
                             formatter: (value) => {
-                                // Format số tiền với dấu phẩy
                                 return value.toLocaleString('vi-VN');
                             },
                             display: true,
@@ -1455,8 +1640,7 @@
                                 font: {
                                     size: isMobile ? 9 : 11
                                 },
-                                callback: function(value) {
-                                    // Format trục x với dấu phẩy
+                                callback: function (value) {
                                     return value.toLocaleString('vi-VN');
                                 }
                             },
@@ -1476,14 +1660,128 @@
                 }
             });
 
-            // Update map
+            // Transaction Chart - Biểu đồ giao dịch kết nối và thưởng
+            const transactionStats = processTransactionData(allTransactionData);
+            const transactionCtx = document.getElementById('transactionChart').getContext('2d');
+
+            transactionChart = new Chart(transactionCtx, {
+                type: 'bar',
+                data: {
+                    labels: transactionStats.labels,
+                    datasets: [
+                        {
+                            label: 'Giá trị giao dịch thành công',
+                            data: transactionStats.transactionValues,
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            order: 2
+                        },
+                        {
+                            label: 'Thưởng cho TK CLB',
+                            data: transactionStats.rewards,
+                            backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 1,
+                            order: 2
+                        },
+                        {
+                            label: 'Xu hướng giao dịch',
+                            data: transactionStats.transactionValues,
+                            type: 'line',
+                            fill: false,
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 2,
+                            pointRadius: isMobile ? 2 : 4,
+                            pointHoverRadius: isMobile ? 4 : 6,
+                            pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                            tension: 0.4,
+                            order: 1
+                        },
+                        {
+                            label: 'Xu hướng thưởng',
+                            data: transactionStats.rewards,
+                            type: 'line',
+                            fill: false,
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 2,
+                            pointRadius: isMobile ? 2 : 4,
+                            pointHoverRadius: isMobile ? 4 : 6,
+                            pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                            tension: 0.4,
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: !isMobile || window.innerWidth > 480,
+                            position: 'top',
+                            labels: {
+                                boxWidth: isMobile ? 10 : 16,
+                                font: {
+                                    size: isMobile ? 10 : 12
+                                },
+                                padding: isMobile ? 8 : 12
+                            }
+                        },
+                        datalabels: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toLocaleString('vi-VN') + ' VNĐ';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 9 : 11
+                                },
+                                callback: function (value) {
+                                    return value.toLocaleString('vi-VN');
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: isMobile ? 8 : 10
+                                },
+                                maxRotation: isMobile ? 90 : 0,
+                                minRotation: isMobile ? 90 : 0
+                            }
+                        }
+                    }
+                }
+            });
             await updateMap(filteredData);
         }
-
-        document.getElementById('monthFilter').addEventListener('change', function (e) {
-            currentFilter = e.target.value;
-            renderCharts();
-        });
 
         window.addEventListener('resize', function () {
             const wasIsMobile = isMobile;
