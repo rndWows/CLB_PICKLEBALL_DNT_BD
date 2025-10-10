@@ -5,7 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Dancing+Script:wght@700&display=swap"
     rel="stylesheet">
   <title>Happy Birthday</title>
   <style>
@@ -68,38 +71,18 @@
       object-position: center;
     }
 
-    /* ✨ CẢI TIẾN: CSS cho tên sắc nét hơn khi chụp */
     .name {
       font-size: 40px;
       font-family: 'Montserrat', sans-serif;
-      font-weight: 900;
-      text-align: center;
+      font-weight: 700;
+      color: #FFC107;
       margin-bottom: 60px;
+      text-align: center;
+      background: linear-gradient(to bottom, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 1px #8B4513;
       padding: 10px 0;
-      color: #FFD700;
-      text-shadow: 
-        2px 2px 0px #8B4513,
-        -1px -1px 0px #8B4513,
-        1px -1px 0px #8B4513,
-        -1px 1px 0px #8B4513,
-        1px 1px 0px #8B4513,
-        0px 2px 4px rgba(0, 0, 0, 0.5);
-      letter-spacing: 1px;
-      /* Fallback cho trình duyệt không hỗ trợ gradient text */
-    }
-
-    /* Thêm gradient overlay nếu trình duyệt hỗ trợ */
-    @supports (-webkit-background-clip: text) {
-      .name {
-        background: linear-gradient(to bottom, #FFD700 0%, #FFA500 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        /* Giữ text-shadow riêng để tạo viền */
-        filter: drop-shadow(2px 2px 0px #8B4513) 
-                drop-shadow(-1px -1px 0px #8B4513)
-                drop-shadow(1px -1px 0px #8B4513)
-                drop-shadow(-1px 1px 0px #8B4513);
-      }
     }
 
     .right {
@@ -213,7 +196,7 @@
       }
 
       .name {
-        font-size: 32px;
+        font-size: 30px;
       }
     }
   </style>
@@ -311,12 +294,9 @@
 
     function ensureFontsLoaded(callback) {
       if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(function() {
-          // Thêm thời gian chờ để đảm bảo fonts render hoàn toàn
-          setTimeout(callback, 500);
-        });
+        document.fonts.ready.then(callback);
       } else {
-        setTimeout(callback, 1500);
+        setTimeout(callback, 1000);
       }
     }
 
@@ -443,7 +423,7 @@
       }
     });
 
-    // ✨ CHỤP ẢNH VỚI SCALE CAO HỖN ĐỂ CHỮ SẮC NÉT ✨
+    // ✨ Phần chụp ảnh đã được cải tiến ✨
     document.getElementById('capture-btn').addEventListener('click', async function () {
       const captureBtn = document.getElementById('capture-btn');
       const container = document.querySelector('.container');
@@ -452,7 +432,7 @@
       
       const loadingMsg = document.createElement('div');
       loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 10px; z-index: 10000; font-size: 18px;';
-      loadingMsg.textContent = 'Đang chụp ảnh chất lượng cao...';
+      loadingMsg.textContent = 'Đang chụp ảnh...';
       document.body.appendChild(loadingMsg);
 
       try {
@@ -461,31 +441,20 @@
           container.style.backgroundImage = `url(${backgroundDataUrl})`;
         }
 
-        // Chờ lâu hơn để fonts và effects render đầy đủ
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         const canvas = await html2canvas(container, {
           useCORS: true,
           allowTaint: false,
           logging: false,
-          scale: 3, // ✨ Tăng scale lên 3 để chữ sắc nét hơn
+          scale: 2,
           backgroundColor: '#f4f4f4',
           width: container.offsetWidth,
           height: container.offsetHeight,
           windowWidth: container.offsetWidth,
           windowHeight: container.offsetHeight,
           imageTimeout: 0,
-          removeContainer: false,
-          // Thêm options để render text tốt hơn
-          letterRendering: true,
-          onclone: function(clonedDoc) {
-            // Đảm bảo fonts được load trong cloned document
-            const nameElement = clonedDoc.getElementById('name');
-            if (nameElement) {
-              nameElement.style.fontWeight = '900';
-              nameElement.style.letterSpacing = '1px';
-            }
-          }
+          removeContainer: false
         });
 
         let name = document.getElementById('name').innerText;
@@ -496,7 +465,7 @@
         link.href = canvas.toDataURL('image/png', 1.0);
         link.click();
 
-        loadingMsg.textContent = '✓ Đã lưu ảnh chất lượng cao!';
+        loadingMsg.textContent = '✓ Đã lưu ảnh thành công!';
         loadingMsg.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
         
       } catch (error) {
