@@ -1664,7 +1664,7 @@
                     indexAxis: 'y',
                     layout: {
                         padding: {
-                            right: isMobile ? 90 : 120
+                            right: isMobile ? 85 : 110
                         }
                     },
                     plugins: {
@@ -1677,7 +1677,7 @@
                         },
                         datalabels: {
                             anchor: 'end',
-                            align: 'end',
+                            align: 'start',
                             color: '#333',
                             font: {
                                 weight: 'bold',
@@ -1687,7 +1687,7 @@
                                 return value.toLocaleString('vi-VN');
                             },
                             display: true,
-                            offset: 4,
+                            offset: 6,
                             clamp: false
                         }
                     },
@@ -1705,7 +1705,7 @@
                                     return value.toLocaleString('vi-VN');
                                 }
                             },
-                            suggestedMax: Math.max(...sponsorStats.data) * 1.25
+                            suggestedMax: Math.max(...sponsorStats.data) * 1.2
                         },
                         y: {
                             grid: {
