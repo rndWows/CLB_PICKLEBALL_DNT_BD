@@ -268,17 +268,19 @@
             <!-- Ngày sinh -->
             <div class="relative">
                 <i data-lucide="calendar" class="input-icon"></i>
-                <label for="ngaySinh" class="block text-sm font-semibold text-gray-700 mb-2">Ngày sinh</label>
+                <label for="ngaySinh" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Ngày sinh</label>
                 <input type="date" id="ngaySinh" name="ngaySinh"
-                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2">
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
+                    required>
             </div>
 
             <!-- Giới tính -->
             <div class="relative">
                 <i data-lucide="users" class="input-icon"></i>
-                <label for="gioiTinh" class="block text-sm font-semibold text-gray-700 mb-2">Giới tính</label>
+                <label for="gioiTinh" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Giới tính</label>
                 <select id="gioiTinh" name="gioiTinh"
-                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2">
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
+                    required>
                     <option value="">Chọn giới tính</option>
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
@@ -289,13 +291,14 @@
             <!-- Nơi ở hiện tại -->
             <div class="relative">
                 <i data-lucide="map-pin" class="input-icon"></i>
-                <label for="diaChi" class="block text-sm font-semibold text-gray-700 mb-2">Nơi ở hiện tại</label>
+                <label for="diaChi" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Nơi ở hiện tại</label>
                 <textarea id="diaChi" name="diaChi" rows="3"
                     class="input-with-icon mt-1 block w-full shadow-sm py-2"
-                    placeholder="Nhập địa chỉ hiện tại của bạn"></textarea>
+                    placeholder="Nhập địa chỉ hiện tại của bạn"
+                    required></textarea>
             </div>
 
-            <!-- Trình PKB -->
+            <!-- Trình PKB (KHÔNG BẮT BUỘC) -->
             <div class="relative">
                 <i data-lucide="trophy" class="input-icon"></i>
                 <label for="trinhPKB" class="block text-sm font-semibold text-gray-700 mb-2">Trình độ Pickleball</label>
@@ -308,8 +311,8 @@
             <!-- Size áo -->
             <div class="relative">
                 <i data-lucide="shirt" class="input-icon"></i>
-                <label for="sizeAo" class="block text-sm font-semibold text-gray-700 mb-2">Size áo</label>
-                <select id="sizeAo" name="sizeAo" class="mt-1 block w-full shadow-sm">
+                <label for="sizeAo" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Size áo</label>
+                <select id="sizeAo" name="sizeAo" class="mt-1 block w-full shadow-sm" required>
                     <option value="">Chọn size áo</option>
                     <optgroup label="Nam">
                         <option value="XXL - Nam (>83kg)">XXL - Nam (>83kg)</option>
@@ -328,7 +331,7 @@
                 </select>
             </div>
 
-            <!-- Hội viên DNT HCM (MỚI THÊM) -->
+            <!-- Hội viên DNT HCM -->
             <div class="relative">
                 <label class="block text-sm font-semibold text-gray-700 mb-2 required-field">
                     <i data-lucide="user-check" class="inline-block mr-2" style="width: 18px; height: 18px;"></i>
@@ -358,9 +361,10 @@
 
             <!-- Logo công ty -->
             <div class="relative">
-                <label for="filelogo" class="block text-sm font-semibold text-gray-700 mb-2">Logo công ty</label>
+                <label for="filelogo" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Logo công ty</label>
                 <input type="file" id="filelogo" name="filelogo" accept="image/*"
-                    class="custom-file-input mt-1 block w-full text-sm text-gray-500">
+                    class="custom-file-input mt-1 block w-full text-sm text-gray-500"
+                    required>
                 <div id="logoPreview" class="mt-4 text-center">
                     <!-- Khu vực để hiển thị xem trước ảnh -->
                 </div>
@@ -369,19 +373,21 @@
             <!-- Chức vụ -->
             <div class="relative">
                 <i data-lucide="user-check" class="input-icon"></i>
-                <label for="chucVu" class="block text-sm font-semibold text-gray-700 mb-2">Chức vụ (Công ty)</label>
+                <label for="chucVu" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Chức vụ (Công ty)</label>
                 <input type="text" id="chucVu" name="chucVu"
                     class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
-                    placeholder="VD: Giám đốc, Trưởng phòng...">
+                    placeholder="VD: Giám đốc, Trưởng phòng..."
+                    required>
             </div>
 
             <!-- Sản phẩm/dịch vụ -->
             <div class="relative">
                 <i data-lucide="package" class="input-icon"></i>
-                <label for="spChudao" class="block text-sm font-semibold text-gray-700 mb-2">Sản phẩm/dịch vụ kinh doanh</label>
+                <label for="spChudao" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Sản phẩm/dịch vụ kinh doanh</label>
                 <textarea id="spChudao" name="spChudao" rows="3"
                     class="input-with-icon mt-1 block w-full shadow-sm py-2"
-                    placeholder="Mô tả sản phẩm/dịch vụ chủ đạo của công ty"></textarea>
+                    placeholder="Mô tả sản phẩm/dịch vụ chủ đạo của công ty"
+                    required></textarea>
             </div>
 
             <div class="fixed-button">
@@ -526,7 +532,12 @@
                     { id: 'hoVaTen', name: 'Họ và tên' },
                     { id: 'soDienThoai', name: 'Số điện thoại' },
                     { id: 'email', name: 'Email' },
-                    { id: 'congTy', name: 'Công ty' }
+                    { id: 'ngaySinh', name: 'Ngày sinh' },
+                    { id: 'gioiTinh', name: 'Giới tính' },
+                    { id: 'diaChi', name: 'Nơi ở hiện tại' },
+                    { id: 'congTy', name: 'Công ty' },
+                    { id: 'chucVu', name: 'Chức vụ' },
+                    { id: 'spChudao', name: 'Sản phẩm/dịch vụ kinh doanh' }
                 ];
 
                 const missingFields = [];
@@ -542,6 +553,18 @@
                 const fileInput = document.getElementById('fileHS');
                 if (fileInput.files.length === 0) {
                     missingFields.push('Hình hội viên');
+                }
+
+                // Kiểm tra file logo
+                const fileInputLogo = document.getElementById('filelogo');
+                if (fileInputLogo.files.length === 0) {
+                    missingFields.push('Logo công ty');
+                }
+
+                // Kiểm tra size áo
+                const sizeAo = document.getElementById('sizeAo').value;
+                if (!sizeAo) {
+                    missingFields.push('Size áo');
                 }
 
                 // Kiểm tra radio button hội viên
@@ -588,9 +611,9 @@
                     "Ngày sinh nhật": data.ngaySinh,
                     "Giới tính": data.gioiTinh,
                     "Nơi ở hiện tại": data.diaChi,
-                    "Trình PKB": data.trinhPKB,
+                    "Trình PKB": data.trinhPKB || "", // Không bắt buộc
                     "Size áo": data.sizeAo,
-                    "Là hội viên": data.laHoiVien, // Thêm trường mới
+                    "Là hội viên": data.laHoiVien,
                     "Công ty": data.congTy,
                     "Chức vụ (Cty)": data.chucVu,
                     "SP/DV_chu_dao": data.spChudao,
