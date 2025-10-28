@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký hội viên CLB </title>
+    <title>Đăng ký hội viên CLB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.4/luxon.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
@@ -17,7 +17,8 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f3f4f6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
 
         .input-icon {
@@ -31,14 +32,16 @@
 
         .input-with-icon {
             padding-left: 40px;
-            border: 2px solid #D1D5DB;
-            border-radius: 0.5rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 0.75rem;
             transition: all 0.3s ease;
+            background-color: #F9FAFB;
         }
 
         .input-with-icon:focus {
-            border-color: #4F46E5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background-color: white;
         }
 
         .fixed-button {
@@ -52,21 +55,23 @@
         }
 
         .form-container {
-            padding-bottom: 80px;
+            padding-bottom: 100px;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
+                transform: translateY(20px);
             }
 
             to {
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
         .fade-in {
-            animation: fadeIn 0.5s ease-out;
+            animation: fadeIn 0.6s ease-out;
         }
 
         .custom-file-input::-webkit-file-upload-button {
@@ -76,79 +81,128 @@
         .custom-file-input::before {
             content: 'Chọn file';
             display: inline-block;
-            background: linear-gradient(top, #f9f9f9, #e3e3e3);
-            border: 1px solid #999;
-            border-radius: 3px;
-            padding: 5px 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 8px 16px;
             outline: none;
             white-space: nowrap;
             cursor: pointer;
-            text-shadow: 1px 1px #fff;
-            font-weight: 700;
-            font-size: 10pt;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
         }
 
         .custom-file-input:hover::before {
-            border-color: black;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: scale(1.05);
         }
 
-        .custom-file-input:active::before {
-            background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
+        .required-field::after {
+            content: ' *';
+            color: #EF4444;
+            font-weight: bold;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            border-radius: 1rem 1rem 0 0;
+            margin: -2rem -2rem 2rem -2rem;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .image-preview-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .image-preview-container img {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .image-preview-container img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
         }
     </style>
 </head>
 
 <body class="bg-gray-100">
-    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden md:max-w-2xl p-8 mt-10 mb-20 fade-in">
-        <h2 class="text-3xl font-bold mb-8 text-center text-indigo-600">Đăng ký hội viên CLB PICKLEBAL</h2>
-        <form id="expenseForm" class="space-y-6">
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden p-8 mt-10 mb-20 fade-in">
+        <div class="card-header">
+            <h2 class="text-3xl font-bold text-center text-white">Đăng ký hội viên CLB PICKLEBALL</h2>
+            <p class="text-center text-white text-sm mt-2 opacity-90">Vui lòng điền đầy đủ thông tin bên dưới</p>
+        </div>
 
+        <form id="expenseForm" class="space-y-6 form-container">
+            <!-- Họ và tên -->
             <div class="relative">
                 <i data-lucide="user" class="input-icon"></i>
-                <label for="hoVaTen" class="block text-sm font-medium text-gray-700 mb-1">Họ và tên (Viết in
-                    hoa)</label>
+                <label for="hoVaTen" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Họ và tên (Viết in hoa)</label>
                 <input type="text" id="hoVaTen" name="hoVaTen"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2"
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
+                    placeholder="VD: NGUYỄN VĂN A"
                     required>
             </div>
 
+            <!-- Hình hội viên -->
             <div class="relative">
-                <label for="fileHS" class="block text-sm font-medium text-gray-700 mb-1">Hình hội viên</label>
+                <label for="fileHS" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Hình hội viên</label>
                 <input type="file" id="fileHS" name="fileHS" accept="image/*"
-                    class="custom-file-input mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                <div id="imagePreview" class="mt-3">
+                    class="custom-file-input mt-1 block w-full text-sm text-gray-500"
+                    required>
+                <div id="imagePreview" class="mt-4 text-center">
                     <!-- Khu vực hiển thị xem trước ảnh -->
                 </div>
             </div>
 
+            <!-- Số điện thoại -->
             <div class="relative">
                 <i data-lucide="phone" class="input-icon"></i>
-                <label for="soDienThoai" class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                <label for="soDienThoai" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Số điện thoại</label>
                 <input type="tel" id="soDienThoai" name="soDienThoai"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2"
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
+                    placeholder="VD: 0912345678"
                     required>
             </div>
 
+            <!-- Email -->
             <div class="relative">
                 <i data-lucide="mail" class="input-icon"></i>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label for="email" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Email</label>
                 <input type="email" id="email" name="email"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2"
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
+                    placeholder="VD: example@email.com"
                     required>
             </div>
 
+            <!-- Ngày sinh -->
             <div class="relative">
-                <label for="ngaySinh" class="block text-sm font-medium text-gray-700 mb-1">Ngày sinh:</label>
+                <i data-lucide="calendar" class="input-icon"></i>
+                <label for="ngaySinh" class="block text-sm font-semibold text-gray-700 mb-2">Ngày sinh</label>
                 <input type="date" id="ngaySinh" name="ngaySinh"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2"
-                    required>
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2">
             </div>
 
+            <!-- Giới tính -->
             <div class="relative">
-                <label for="gioiTinh" class="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                <i data-lucide="users" class="input-icon"></i>
+                <label for="gioiTinh" class="block text-sm font-semibold text-gray-700 mb-2">Giới tính</label>
                 <select id="gioiTinh" name="gioiTinh"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2"
-                    required>
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2">
                     <option value="">Chọn giới tính</option>
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
@@ -156,61 +210,89 @@
                 </select>
             </div>
 
+            <!-- Nơi ở hiện tại -->
             <div class="relative">
                 <i data-lucide="map-pin" class="input-icon"></i>
-                <label for="diaChi" class="block text-sm font-medium text-gray-700 mb-1">Nơi ở hiện tại</label>
+                <label for="diaChi" class="block text-sm font-semibold text-gray-700 mb-2">Nơi ở hiện tại</label>
                 <textarea id="diaChi" name="diaChi" rows="3"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50  h-10 py-2"></textarea>
+                    class="input-with-icon mt-1 block w-full shadow-sm py-2"
+                    placeholder="Nhập địa chỉ hiện tại của bạn"></textarea>
             </div>
 
+            <!-- Trình PKB -->
             <div class="relative">
-                <i data-lucide="globe" class="input-icon"></i>
-                <label for="danToc" class="block text-sm font-medium text-gray-700 mb-1">Dân tộc</label>
-                <input type="text" id="danToc" name="danToc"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2">
+                <i data-lucide="trophy" class="input-icon"></i>
+                <label for="trinhPKB" class="block text-sm font-semibold text-gray-700 mb-2">Trình độ Pickleball</label>
+                <select id="trinhPKB" name="trinhPKB"
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2">
+                    <option value="">Chọn trình độ</option>
+                    <option value="Mới bắt đầu">Mới bắt đầu</option>
+                    <option value="Trung bình">Trung bình</option>
+                    <option value="Khá">Khá</option>
+                    <option value="Giỏi">Giỏi</option>
+                    <option value="Chuyên nghiệp">Chuyên nghiệp</option>
+                </select>
             </div>
 
+            <!-- Size áo -->
             <div class="relative">
-                <i data-lucide="cross" class="input-icon"></i>
-                <label for="tonGiao" class="block text-sm font-medium text-gray-700 mb-1">Tôn giáo</label>
-                <input type="text" id="tonGiao" name="tonGiao"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2">
+                <i data-lucide="shirt" class="input-icon"></i>
+                <label for="sizeAo" class="block text-sm font-semibold text-gray-700 mb-2">Size áo</label>
+                <select id="sizeAo" name="sizeAo"
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2">
+                    <option value="">Chọn size áo</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="XXL">XXL</option>
+                    <option value="XXXL">XXXL</option>
+                </select>
             </div>
 
+            <!-- Công ty -->
             <div class="relative">
                 <i data-lucide="briefcase" class="input-icon"></i>
-                <label for="congTy" class="block text-sm font-medium text-gray-700 mb-1">Công ty</label>
+                <label for="congTy" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Công ty</label>
                 <input type="text" id="congTy" name="congTy"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2">
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
+                    placeholder="Nhập tên công ty"
+                    required>
             </div>
 
+            <!-- Logo công ty -->
             <div class="relative">
-                <label for="filelogo" class="block text-sm font-medium text-gray-700 mb-1">Logo công ty</label>
+                <label for="filelogo" class="block text-sm font-semibold text-gray-700 mb-2">Logo công ty</label>
                 <input type="file" id="filelogo" name="filelogo" accept="image/*"
-                    class="custom-file-input mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                <div id="logoPreview" class="mt-3">
+                    class="custom-file-input mt-1 block w-full text-sm text-gray-500">
+                <div id="logoPreview" class="mt-4 text-center">
                     <!-- Khu vực để hiển thị xem trước ảnh -->
                 </div>
             </div>
 
+            <!-- Chức vụ -->
             <div class="relative">
                 <i data-lucide="user-check" class="input-icon"></i>
-                <label for="chucVu" class="block text-sm font-medium text-gray-700 mb-1">Chức vụ (Cty)</label>
+                <label for="chucVu" class="block text-sm font-semibold text-gray-700 mb-2">Chức vụ (Công ty)</label>
                 <input type="text" id="chucVu" name="chucVu"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2">
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
+                    placeholder="VD: Giám đốc, Trưởng phòng...">
             </div>
 
+            <!-- Sản phẩm/dịch vụ -->
             <div class="relative">
                 <i data-lucide="package" class="input-icon"></i>
-                <label for="spChudao" class="block text-sm font-medium text-gray-700 mb-1">SP/DV_chu_dao</label>
-                <input type="text" id="spChudao" name="spChudao"
-                    class="input-with-icon mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-10 py-2">
+                <label for="spChudao" class="block text-sm font-semibold text-gray-700 mb-2">Sản phẩm/dịch vụ kinh doanh</label>
+                <textarea id="spChudao" name="spChudao" rows="3"
+                    class="input-with-icon mt-1 block w-full shadow-sm py-2"
+                    placeholder="Mô tả sản phẩm/dịch vụ chủ đạo của công ty"></textarea>
             </div>
 
             <div class="fixed-button">
                 <button type="submit"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                    Gửi
+                    class="submit-btn w-full flex justify-center items-center py-3 px-6 border border-transparent rounded-xl shadow-lg text-base font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                    <i data-lucide="send" class="mr-2" style="width: 20px; height: 20px;"></i>
+                    Gửi đăng ký
                 </button>
             </div>
         </form>
@@ -222,6 +304,7 @@
         const appId = 'd9ee17ac-4397-452d-9e74-97997607fa4b';
         const accessKey = 'V2-Rovhm-ZiLxx-msd7k-TSoig-NkECL-5LXEq-Kraws-yE09V';
         const region = 'www';
+
         function apiRequest(tableName, action, data) {
             const apiUrl = `https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`;
             return $.ajax({
@@ -242,7 +325,6 @@
             }).then(response => {
                 return response;
             }).catch(error => {
-
                 throw error;
             });
         }
@@ -253,7 +335,6 @@
                 reader.onload = () => resolve(reader.result);
                 reader.onerror = error => reject(error);
                 reader.readAsDataURL(file);
-
             });
         }
 
@@ -264,11 +345,14 @@
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     const preview = document.getElementById('imagePreview');
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Hình hội viên" class="w-32 h-32 rounded-full mx-auto border border-gray-300">`;
+                    preview.innerHTML = `
+                        <div class="image-preview-container">
+                            <img src="${e.target.result}" alt="Hình hội viên" class="w-40 h-40 rounded-2xl mx-auto border-4 border-indigo-200 object-cover">
+                        </div>
+                    `;
                 };
                 reader.readAsDataURL(file);
             } else {
-                // Nếu file không phải là ảnh, xóa phần xem trước
                 document.getElementById('imagePreview').innerHTML = '';
             }
         });
@@ -280,7 +364,11 @@
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     const preview = document.getElementById('logoPreview');
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Logo công ty" class="w-32 h-32 rounded-full mx-auto border border-gray-300">`;
+                    preview.innerHTML = `
+                        <div class="image-preview-container">
+                            <img src="${e.target.result}" alt="Logo công ty" class="w-40 h-40 rounded-2xl mx-auto border-4 border-indigo-200 object-cover">
+                        </div>
+                    `;
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -291,26 +379,36 @@
         document.addEventListener('DOMContentLoaded', function () {
             lucide.createIcons();
 
-            // Cập nhật xử lý gửi form
             document.getElementById('expenseForm').addEventListener('submit', async function (e) {
                 e.preventDefault();
 
                 // Kiểm tra các trường bắt buộc
-                const requiredFields = ['hoVaTen', 'soDienThoai', 'email'];
+                const requiredFields = [
+                    { id: 'hoVaTen', name: 'Họ và tên' },
+                    { id: 'soDienThoai', name: 'Số điện thoại' },
+                    { id: 'email', name: 'Email' },
+                    { id: 'congTy', name: 'Công ty' }
+                ];
+
                 const missingFields = [];
 
                 requiredFields.forEach(field => {
-                    const input = this.elements[field];
+                    const input = document.getElementById(field.id);
                     if (!input.value.trim()) {
-                        missingFields.push(input.previousElementSibling.textContent);
+                        missingFields.push(field.name);
                     }
                 });
 
+                // Kiểm tra file avatar
+                const fileInput = document.getElementById('fileHS');
+                if (fileInput.files.length === 0) {
+                    missingFields.push('Hình hội viên');
+                }
+
                 if (missingFields.length > 0) {
-                    // Hiển thị thông báo lỗi nếu thiếu thông tin
                     Toastify({
-                        text: `Vui lòng nhập đầy đủ thông tin: ${missingFields.join(', ')}`,
-                        duration: 4000,
+                        text: `⚠️ Vui lòng nhập đầy đủ thông tin: ${missingFields.join(', ')}`,
+                        duration: 5000,
                         close: true,
                         gravity: "top",
                         position: "right",
@@ -323,14 +421,14 @@
                 const formData = new FormData(this);
                 const data = Object.fromEntries(formData.entries());
 
-                const fileInput = document.getElementById('fileHS');
+                // Đọc hình hội viên
                 let filebase = "";
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     filebase = await readFile(file);
                 }
 
-                // Đọc logo công ty và chuyển thành Base64
+                // Đọc logo công ty
                 const fileInput1 = document.getElementById('filelogo');
                 let logoBase64 = "";
                 if (fileInput1.files.length > 0) {
@@ -338,54 +436,60 @@
                     logoBase64 = await readFile(file);
                 }
 
-
-                // Log dữ liệu ra console
-                console.log('Form Data:', data);
-                const formDataToSend  = {
+                const formDataToSend = {
                     "Tên hội viên": data.hoVaTen,
                     "Điện thoại hội viên": data.soDienThoai,
                     "Email": data.email,
                     "Ngày sinh nhật": data.ngaySinh,
                     "Giới tính": data.gioiTinh,
                     "Nơi ở hiện tại": data.diaChi,
-                    "Dân tộc": data.danToc,
-                    "Tôn giáo": data.tonGiao,
+                    "Trình PKB": data.trinhPKB,
+                    "Size áo": data.sizeAo,
                     "Công ty": data.congTy,
                     "Chức vụ (Cty)": data.chucVu,
                     "SP/DV_chu_dao": data.spChudao,
                     "Hình hội viên": filebase,
-                    "Logo": logoBase64 
-
+                    "Logo": logoBase64
                 };
 
-                console.log(formDataToSend );
+                console.log(formDataToSend);
                 disableForm();
                 showLoadingOverlay();
-                const response = await apiRequest('HV_NCC_KH', 'Add', {
-                    Rows: [formDataToSend ]
-                });
 
+                try {
+                    const response = await apiRequest('HV_NCC_KH', 'Add', {
+                        Rows: [formDataToSend]
+                    });
 
+                    Toastify({
+                        text: "✅ Đăng ký thành công! Cảm ơn bạn đã tham gia CLB.",
+                        duration: 4000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+                    }).showToast();
 
-
-                // Hiển thị thông báo thành công
-                Toastify({
-                    text: "Form đã được gửi thành công!",
-                    duration: 3000,
-                    close: true,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-                }).showToast();
-
-                this.reset();
-                document.getElementById('imagePreview').innerHTML = '';
-                document.getElementById('logoPreview').innerHTML = '';
-                enableForm();
-                hideLoadingOverlay();
+                    this.reset();
+                    document.getElementById('imagePreview').innerHTML = '';
+                    document.getElementById('logoPreview').innerHTML = '';
+                } catch (error) {
+                    Toastify({
+                        text: "❌ Có lỗi xảy ra. Vui lòng thử lại!",
+                        duration: 4000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+                    }).showToast();
+                    console.error(error);
+                } finally {
+                    enableForm();
+                    hideLoadingOverlay();
+                }
             });
         });
-        // Hàm để disable form
+
         function disableForm() {
             const form = document.getElementById('expenseForm');
             const elements = form.elements;
@@ -394,7 +498,6 @@
             }
         }
 
-        // Hàm để enable form
         function enableForm() {
             const form = document.getElementById('expenseForm');
             const elements = form.elements;
@@ -403,7 +506,6 @@
             }
         }
 
-        // Hàm để hiển thị loading overlay
         function showLoadingOverlay() {
             const overlay = document.createElement('div');
             overlay.id = 'loadingOverlay';
@@ -412,41 +514,48 @@
             overlay.style.left = '0';
             overlay.style.width = '100%';
             overlay.style.height = '100%';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
             overlay.style.display = 'flex';
             overlay.style.justifyContent = 'center';
             overlay.style.alignItems = 'center';
             overlay.style.zIndex = '9999';
+            overlay.style.flexDirection = 'column';
 
             const spinner = document.createElement('div');
-            spinner.style.border = '4px solid #f3f3f3';
-            spinner.style.borderTop = '4px solid #3498db';
+            spinner.style.border = '6px solid #f3f3f3';
+            spinner.style.borderTop = '6px solid #667eea';
             spinner.style.borderRadius = '50%';
-            spinner.style.width = '50px';
-            spinner.style.height = '50px';
+            spinner.style.width = '60px';
+            spinner.style.height = '60px';
             spinner.style.animation = 'spin 1s linear infinite';
+
+            const text = document.createElement('p');
+            text.textContent = 'Đang xử lý...';
+            text.style.color = 'white';
+            text.style.marginTop = '20px';
+            text.style.fontSize = '16px';
+            text.style.fontWeight = '600';
 
             const keyframes = document.createElement('style');
             keyframes.textContent = `
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    `;
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
 
             document.head.appendChild(keyframes);
             overlay.appendChild(spinner);
+            overlay.appendChild(text);
             document.body.appendChild(overlay);
         }
 
-        // Hàm để ẩn loading overlay
         function hideLoadingOverlay() {
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) {
                 overlay.remove();
             }
         }
-
     </script>
 </body>
 
