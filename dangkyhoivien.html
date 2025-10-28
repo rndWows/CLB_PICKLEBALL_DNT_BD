@@ -168,6 +168,51 @@
         .choices__item--selectable.is-highlighted {
             background-color: #667eea !important;
         }
+
+        /* Style cho Radio Button */
+        .radio-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 12px 20px;
+            border: 2px solid #E5E7EB;
+            border-radius: 0.75rem;
+            background-color: #F9FAFB;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .radio-option:hover {
+            border-color: #667eea;
+            background-color: white;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .radio-option.selected {
+            border-color: #667eea;
+            background-color: #EEF2FF;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .radio-option label {
+            cursor: pointer;
+            font-weight: 500;
+            color: #374151;
+            user-select: none;
+        }
     </style>
 </head>
 
@@ -281,6 +326,24 @@
                         <option value="S - Nữ (40-46kg)">S - Nữ (40-46kg)</option>
                     </optgroup>
                 </select>
+            </div>
+
+            <!-- Hội viên DNT HCM (MỚI THÊM) -->
+            <div class="relative">
+                <label class="block text-sm font-semibold text-gray-700 mb-2 required-field">
+                    <i data-lucide="user-check" class="inline-block mr-2" style="width: 18px; height: 18px;"></i>
+                    Bạn là Hội viên DNT HCM (mới)?
+                </label>
+                <div class="radio-container">
+                    <div class="radio-option" id="radio-yes">
+                        <input type="radio" id="hoiVienYes" name="laHoiVien" value="Đúng" required>
+                        <label for="hoiVienYes">Đúng</label>
+                    </div>
+                    <div class="radio-option" id="radio-no">
+                        <input type="radio" id="hoiVienNo" name="laHoiVien" value="Không" required>
+                        <label for="hoiVienNo">Không</label>
+                    </div>
+                </div>
             </div>
 
             <!-- Công ty -->
@@ -422,6 +485,39 @@
                 placeholderValue: 'Chọn size áo phù hợp'
             });
 
+            // Xử lý hiệu ứng cho radio button
+            const radioYes = document.getElementById('radio-yes');
+            const radioNo = document.getElementById('radio-no');
+            const radioInputYes = document.getElementById('hoiVienYes');
+            const radioInputNo = document.getElementById('hoiVienNo');
+
+            radioYes.addEventListener('click', function() {
+                radioInputYes.checked = true;
+                radioYes.classList.add('selected');
+                radioNo.classList.remove('selected');
+            });
+
+            radioNo.addEventListener('click', function() {
+                radioInputNo.checked = true;
+                radioNo.classList.add('selected');
+                radioYes.classList.remove('selected');
+            });
+
+            // Xử lý khi radio button thay đổi
+            radioInputYes.addEventListener('change', function() {
+                if(this.checked) {
+                    radioYes.classList.add('selected');
+                    radioNo.classList.remove('selected');
+                }
+            });
+
+            radioInputNo.addEventListener('change', function() {
+                if(this.checked) {
+                    radioNo.classList.add('selected');
+                    radioYes.classList.remove('selected');
+                }
+            });
+
             document.getElementById('expenseForm').addEventListener('submit', async function (e) {
                 e.preventDefault();
 
@@ -446,6 +542,12 @@
                 const fileInput = document.getElementById('fileHS');
                 if (fileInput.files.length === 0) {
                     missingFields.push('Hình hội viên');
+                }
+
+                // Kiểm tra radio button hội viên
+                const laHoiVien = document.querySelector('input[name="laHoiVien"]:checked');
+                if (!laHoiVien) {
+                    missingFields.push('Hội viên DNT HCM');
                 }
 
                 if (missingFields.length > 0) {
@@ -488,6 +590,7 @@
                     "Nơi ở hiện tại": data.diaChi,
                     "Trình PKB": data.trinhPKB,
                     "Size áo": data.sizeAo,
+                    "Là hội viên": data.laHoiVien, // Thêm trường mới
                     "Công ty": data.congTy,
                     "Chức vụ (Cty)": data.chucVu,
                     "SP/DV_chu_dao": data.spChudao,
@@ -516,6 +619,8 @@
                     this.reset();
                     document.getElementById('imagePreview').innerHTML = '';
                     document.getElementById('logoPreview').innerHTML = '';
+                    radioYes.classList.remove('selected');
+                    radioNo.classList.remove('selected');
                     sizeAoSelect.setChoiceByValue(''); // Reset Choices.js select
                 } catch (error) {
                     Toastify({
