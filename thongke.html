@@ -1122,9 +1122,10 @@
             };
         }
 
-        function processSponsorData(sponsorData, memberData) {
+        function processSponsorData(sponsorData, memberData, transactionData) {
             const sponsorStats = new Map();
 
+            // Bước 1: Tạo mapping Mã hội viên -> Tên hội viên
             const memberCodeToName = new Map();
             memberData.forEach(member => {
                 if (member["Mã"] && member["Tên hội viên"]) {
@@ -1132,13 +1133,21 @@
                 }
             });
 
-            const filteredSponsors = filterDataByDateRange(sponsorData, currentFromMonth, currentToMonth, "Ngày tài trợ");
+            // Bước 2: Lọc dữ liệu tài trợ theo khoảng thời gian
+            const filteredSponsors = filterDataByDateRange(
+                sponsorData,
+                currentFromMonth,
+                currentToMonth,
+                "Ngày tài trợ"
+            );
 
+            // Bước 3: Tính tổng tiền tài trợ từ bảng TaiTroCLB
             filteredSponsors.forEach(sponsor => {
                 let sponsorName = sponsor["Tên nhà tài trợ bên ngoài"] || "";
 
                 if (!sponsorName && sponsor["Tên hội viên tài trợ"]) {
-                    sponsorName = memberCodeToName.get(sponsor["Tên hội viên tài trợ"]) || sponsor["Tên hội viên tài trợ"];
+                    sponsorName = memberCodeToName.get(sponsor["Tên hội viên tài trợ"])
+                        || sponsor["Tên hội viên tài trợ"];
                 }
 
                 if (sponsorName) {
@@ -1148,10 +1157,37 @@
 
                     const cashAmount = parseFloat(sponsor["Số tiền hiện kim"]) || 0;
                     const kindAmount = parseFloat(sponsor["Số tiền hiện vật quy đổi"]) || 0;
-                    sponsorStats.set(sponsorName, sponsorStats.get(sponsorName) + cashAmount + kindAmount);
+                    sponsorStats.set(sponsorName,
+                        sponsorStats.get(sponsorName) + cashAmount + kindAmount);
                 }
             });
 
+            // ✨ THÊM MỚI: Bước 4 - Cộng thêm "Số tiền ủng hộ Quỹ" từ bảng KETNOI GIAOTHUONG
+            const filteredTransactions = filterDataByDateRange(
+                transactionData,
+                currentFromMonth,
+                currentToMonth,
+                "Ngày"
+            );
+
+            filteredTransactions.forEach(transaction => {
+                const memberCode = transaction["Tên hội viên"];
+                const fundAmount = parseFloat(transaction["Số tiền ủng hộ Quỹ"]) || 0;
+
+                if (memberCode && fundAmount > 0) {
+                    // Lấy tên hội viên từ mã
+                    const memberName = memberCodeToName.get(memberCode) || memberCode;
+
+                    if (!sponsorStats.has(memberName)) {
+                        sponsorStats.set(memberName, 0);
+                    }
+
+                    sponsorStats.set(memberName,
+                        sponsorStats.get(memberName) + fundAmount);
+                }
+            });
+
+            // Bước 5: Sắp xếp và lấy TOP 10
             const sortedStats = Array.from(sponsorStats.entries())
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
@@ -1627,7 +1663,7 @@
             });
 
             // Sponsor Chart
-            const sponsorStats = processSponsorData(allSponsorData, allData);
+            const sponsorStats = processSponsorData(allSponsorData, allData, allTransactionData);
             const sponsorCtx = document.getElementById('sponsorChart').getContext('2d');
 
             const sponsorColors = [
