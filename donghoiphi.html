@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danh Sách Hội Viên Tới Hạn Đóng Hội Phí</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             font-family: Arial, sans-serif;
@@ -22,7 +19,7 @@
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         h1 {
@@ -39,7 +36,7 @@
             font-size: 14px;
         }
 
-        /* ===== FILTER BAR ===== */
+        /* ── Filter Bar ── */
         .filter-bar {
             display: flex;
             flex-wrap: wrap;
@@ -59,8 +56,7 @@
             color: #333;
         }
 
-        .filter-bar select,
-        .filter-bar input[type="number"] {
+        .filter-bar select {
             padding: 6px 10px;
             border: 1px solid #ced4da;
             border-radius: 4px;
@@ -69,21 +65,28 @@
             cursor: pointer;
         }
 
-        .filter-bar select:focus,
-        .filter-bar input[type="number"]:focus {
+        .filter-bar select:focus {
             outline: none;
             border-color: #c0392b;
-            box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.15);
+            box-shadow: 0 0 0 2px rgba(192,57,43,0.15);
         }
 
         .filter-separator {
             width: 1px;
             height: 28px;
             background-color: #dee2e6;
-            margin: 0 4px;
         }
 
-        /* ===== CONTROLS ===== */
+        .filter-note {
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+            width: 100%;
+            text-align: center;
+            margin: 0;
+        }
+
+        /* ── Controls ── */
         .controls {
             text-align: center;
             margin-bottom: 16px;
@@ -100,47 +103,15 @@
             transition: background-color 0.2s, transform 0.1s;
         }
 
-        .btn:active {
-            transform: scale(0.97);
-        }
+        .btn:active { transform: scale(0.97); }
+        .btn-danger  { background-color: #c0392b; color: white; }
+        .btn-danger:hover  { background-color: #a93226; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-success:hover { background-color: #218838; }
+        .btn-info    { background-color: #17a2b8; color: white; }
+        .btn-info:hover    { background-color: #138496; }
 
-        .btn-danger {
-            background-color: #c0392b;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #a93226;
-        }
-
-        .btn-success {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background-color: #218838;
-        }
-
-        .btn-info {
-            background-color: #17a2b8;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background-color: #138496;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-
-        /* ===== STATS ===== */
+        /* ── Stats ── */
         .stats-grid {
             display: flex;
             flex-wrap: wrap;
@@ -151,51 +122,32 @@
 
         .stat-card {
             flex: 1;
-            min-width: 140px;
-            max-width: 200px;
+            min-width: 130px;
+            max-width: 190px;
             padding: 14px 16px;
             border-radius: 8px;
             text-align: center;
             border: 2px solid transparent;
         }
 
-        .stat-card .stat-number {
+        .stat-number {
             font-size: 28px;
             font-weight: bold;
             line-height: 1;
         }
 
-        .stat-card .stat-label {
+        .stat-label {
             font-size: 12px;
             margin-top: 4px;
             font-weight: 500;
         }
 
-        .stat-overdue {
-            background-color: #fdecea;
-            border-color: #e74c3c;
-            color: #c0392b;
-        }
+        .stat-overdue  { background-color: #fdecea; border-color: #e74c3c; color: #c0392b; }
+        .stat-today    { background-color: #fff8e1; border-color: #f39c12; color: #e67e22; }
+        .stat-upcoming { background-color: #e8f5e9; border-color: #27ae60; color: #1e8449; }
+        .stat-total    { background-color: #e3f2fd; border-color: #2980b9; color: #1a5276; }
 
-        .stat-warning {
-            background-color: #fff8e1;
-            border-color: #f39c12;
-            color: #e67e22;
-        }
-
-        .stat-soon {
-            background-color: #e8f5e9;
-            border-color: #27ae60;
-            color: #1e8449;
-        }
-
-        .stat-total {
-            background-color: #e3f2fd;
-            border-color: #2980b9;
-            color: #1a5276;
-        }
-
-        /* ===== LOADING / ERROR ===== */
+        /* ── Loading / Error ── */
         .loading {
             text-align: center;
             padding: 30px;
@@ -203,12 +155,7 @@
             font-size: 15px;
         }
 
-        .loading::before {
-            content: '⏳ ';
-        }
-
         .error {
-            text-align: center;
             padding: 16px;
             color: #c0392b;
             background-color: #fdecea;
@@ -217,11 +164,10 @@
             border-left: 4px solid #c0392b;
         }
 
-        /* ===== TABLE ===== */
+        /* ── Table ── */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
             font-size: 14px;
         }
 
@@ -242,74 +188,46 @@
             vertical-align: middle;
         }
 
-        tbody tr:hover {
-            filter: brightness(0.95);
-            cursor: default;
-        }
+        tbody tr:hover { filter: brightness(0.95); }
 
-        /* Row color by urgency */
-        .row-overdue-critical {
-            background-color: #fdecea !important; /* > 90 ngày - đỏ đậm */
-        }
+        /* Màu hàng */
+        .row-overdue-critical { background-color: #fdecea !important; }  /* quá hạn > 30 ngày  */
+        .row-overdue-normal   { background-color: #fff3cd !important; }  /* quá hạn 1–30 ngày  */
+        .row-due-today        { background-color: #fff9c4 !important; }  /* hôm nay             */
+        .row-upcoming         { background-color: #e8f5e9 !important; }  /* còn ≤ 30 ngày       */
 
-        .row-overdue-high {
-            background-color: #fde8e8 !important; /* 31–90 ngày - đỏ nhạt */
-        }
-
-        .row-overdue-medium {
-            background-color: #fff3cd !important; /* 1–30 ngày - vàng */
-        }
-
-        .row-due-today {
-            background-color: #fff9c4 !important; /* Hôm nay - vàng sáng */
-        }
-
-        .row-upcoming {
-            background-color: #e8f5e9 !important; /* Sắp tới hạn - xanh nhạt */
-        }
-
-        /* Badge for overdue days */
+        /* Badge */
         .badge {
             display: inline-block;
-            padding: 3px 8px;
+            padding: 3px 10px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: bold;
             white-space: nowrap;
         }
 
-        .badge-critical {
-            background-color: #c0392b;
-            color: white;
+        .badge-critical { background-color: #c0392b; color: white; }
+        .badge-overdue  { background-color: #e74c3c; color: white; }
+        .badge-medium   { background-color: #f39c12; color: white; }
+        .badge-today    { background-color: #f1c40f; color: #333;  }
+        .badge-upcoming { background-color: #27ae60; color: white; }
+        .badge-unknown  { background-color: #aaa;    color: white; }
+
+        .name-cell { text-align: left; font-weight: 500; }
+
+        .notes-input {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 4px 6px;
+            font-size: 13px;
+            background: transparent;
         }
 
-        .badge-high {
-            background-color: #e74c3c;
-            color: white;
-        }
-
-        .badge-medium {
-            background-color: #f39c12;
-            color: white;
-        }
-
-        .badge-today {
-            background-color: #f1c40f;
-            color: #333;
-        }
-
-        .badge-upcoming {
-            background-color: #27ae60;
-            color: white;
-        }
-
-        .notes-cell {
-            min-width: 120px;
-        }
-
-        .name-cell {
-            text-align: left;
-            font-weight: 500;
+        .notes-input:focus {
+            outline: none;
+            border-color: #c0392b;
+            background: white;
         }
 
         .no-data {
@@ -320,11 +238,11 @@
             font-weight: 600;
         }
 
-        /* ===== LEGEND ===== */
+        /* ── Legend ── */
         .legend {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
             justify-content: center;
             margin-bottom: 16px;
         }
@@ -344,502 +262,448 @@
             flex-shrink: 0;
         }
 
-        /* ===== PRINT ===== */
+        /* ── Print ── */
         @media print {
-            .controls,
-            .filter-bar,
-            .btn {
-                display: none !important;
-            }
-
-            body {
-                margin: 0;
-                background-color: white;
-            }
-
-            .container {
-                box-shadow: none;
-                padding: 0;
-            }
-
-            table {
-                font-size: 11px;
-            }
-
-            .stats-grid {
-                display: none;
-            }
+            .controls, .filter-bar { display: none !important; }
+            body { margin: 0; background: white; }
+            .container { box-shadow: none; padding: 0; }
+            table { font-size: 11px; }
+            .stats-grid, .legend { display: none; }
+            .notes-input { border: none; }
         }
 
-        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            .filter-separator {
-                display: none;
-            }
-
-            .filter-bar {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            th, td {
-                padding: 6px 4px;
-            }
+            .filter-separator { display: none; }
+            .filter-bar { flex-direction: column; align-items: flex-start; }
+            table { font-size: 12px; }
+            th, td { padding: 6px 4px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <h1>📋 DANH SÁCH HỘI VIÊN TỚI HẠN ĐÓNG HỘI PHÍ</h1>
-        <p class="subtitle" id="currentDate"></p>
+<div class="container">
 
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <label>🔍 Hiển thị:</label>
-            <select id="filterMode" onchange="applyFilter()">
-                <option value="all_due">Tất cả (quá hạn + sắp tới hạn)</option>
-                <option value="overdue_only">Chỉ quá hạn</option>
-                <option value="upcoming_only">Chỉ sắp tới hạn</option>
-                <option value="all_members">Tất cả hội viên</option>
-            </select>
+    <h1>📋 DANH SÁCH HỘI VIÊN TỚI HẠN ĐÓNG HỘI PHÍ</h1>
+    <p class="subtitle" id="currentDate"></p>
 
-            <div class="filter-separator"></div>
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <label>🔍 Lọc:</label>
+        <select id="filterMode" onchange="applyFilter()">
+            <option value="default">Quá hạn + Sắp hết hạn trong 30 ngày tới</option>
+            <option value="overdue_only">Chỉ quá hạn</option>
+            <option value="upcoming_only">Chỉ sắp hết hạn (trong 30 ngày tới)</option>
+            <option value="all_active">Tất cả hội viên active</option>
+        </select>
+        <p class="filter-note">
+            💡 Mặc định: hiển thị tất cả quá hạn + ai còn ≤ 30 ngày là hết hạn
+        </p>
+    </div>
 
-            <label>⏰ Chu kỳ HP (tháng):</label>
-            <input type="number" id="cycleMonths" value="12" min="1" max="36"
-                   style="width: 70px;" onchange="applyFilter()">
+    <!-- Controls -->
+    <div class="controls">
+        <button class="btn btn-danger"  onclick="loadData()">🔄 Tải lại</button>
+        <button class="btn btn-success" onclick="exportToExcel()">📊 Xuất Excel</button>
+        <button class="btn btn-info"    onclick="printTable()">🖨️ In bảng</button>
+    </div>
 
-            <div class="filter-separator"></div>
+    <!-- Loading / Error -->
+    <div id="loading" class="loading">⏳ Đang tải dữ liệu...</div>
+    <div id="error"   class="error"   style="display:none;"></div>
 
-            <label>📅 Cảnh báo trước (ngày):</label>
-            <input type="number" id="warningDays" value="30" min="0" max="90"
-                   style="width: 70px;" onchange="applyFilter()">
+    <!-- Stats -->
+    <div id="statsGrid" class="stats-grid" style="display:none;">
+        <div class="stat-card stat-overdue">
+            <div class="stat-number" id="statOverdue">0</div>
+            <div class="stat-label">⚠️ Đã quá hạn</div>
         </div>
-
-        <!-- Controls -->
-        <div class="controls">
-            <button class="btn btn-danger" onclick="loadData()">🔄 Tải lại dữ liệu</button>
-            <button class="btn btn-success" onclick="exportToExcel()">📊 Xuất Excel</button>
-            <button class="btn btn-info" onclick="printTable()">🖨️ In bảng</button>
+        <div class="stat-card stat-today">
+            <div class="stat-number" id="statToday">0</div>
+            <div class="stat-label">🔴 Hết hạn hôm nay</div>
         </div>
-
-        <!-- Loading / Error -->
-        <div id="loading" class="loading">Đang tải dữ liệu...</div>
-        <div id="error" class="error" style="display: none;"></div>
-
-        <!-- Stats Cards -->
-        <div id="statsGrid" class="stats-grid" style="display: none;">
-            <div class="stat-card stat-overdue">
-                <div class="stat-number" id="statOverdue">0</div>
-                <div class="stat-label">⚠️ Đã quá hạn</div>
-            </div>
-            <div class="stat-card stat-warning">
-                <div class="stat-number" id="statWarning">0</div>
-                <div class="stat-label">🔔 Sắp tới hạn</div>
-            </div>
-            <div class="stat-card stat-soon">
-                <div class="stat-number" id="statUpToDate">0</div>
-                <div class="stat-label">✅ Còn hạn</div>
-            </div>
-            <div class="stat-card stat-total">
-                <div class="stat-number" id="statTotal">0</div>
-                <div class="stat-label">👥 Tổng hội viên</div>
-            </div>
+        <div class="stat-card stat-upcoming">
+            <div class="stat-number" id="statUpcoming">0</div>
+            <div class="stat-label">🔔 Còn ≤ 30 ngày</div>
         </div>
-
-        <!-- Legend -->
-        <div class="legend" id="legend" style="display: none;">
-            <div class="legend-item">
-                <div class="legend-dot" style="background-color: #fdecea; border: 1px solid #c0392b;"></div>
-                <span>Quá hạn &gt; 90 ngày</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-dot" style="background-color: #fde8e8; border: 1px solid #e74c3c;"></div>
-                <span>Quá hạn 31–90 ngày</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-dot" style="background-color: #fff3cd; border: 1px solid #f39c12;"></div>
-                <span>Quá hạn 1–30 ngày</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-dot" style="background-color: #e8f5e9; border: 1px solid #27ae60;"></div>
-                <span>Sắp tới hạn (trong vòng cảnh báo)</span>
-            </div>
-        </div>
-
-        <!-- Table -->
-        <table id="dataTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th style="width: 45px;">STT</th>
-                    <th>Họ và tên</th>
-                    <th>Số điện thoại</th>
-                    <th>Ngày đóng HP lần trước</th>
-                    <th>Ngày hết hạn</th>
-                    <th>Thời gian quá hạn</th>
-                    <th>Trạng thái</th>
-                    <th>Ghi chú</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-
-        <div id="noData" class="no-data" style="display: none;">
-            ✅ Không có hội viên nào tới hạn hoặc quá hạn đóng hội phí!
+        <div class="stat-card stat-total">
+            <div class="stat-number" id="statShowing">0</div>
+            <div class="stat-label">📋 Đang hiển thị</div>
         </div>
     </div>
 
-    <script>
-        // ============================================================
-        // CONFIG — Chỉnh sửa tại đây nếu cần
-        // ============================================================
-        const CONFIG = {
-            appId:      'd9ee17ac-4397-452d-9e74-97997607fa4b',
-            accessKey:  'V2-Rovhm-ZiLxx-msd7k-TSoig-NkECL-5LXEq-Kraws-yE09V',
-            region:     'www',
-            tableName:  'HV_NCC_KH',
+    <!-- Legend -->
+    <div class="legend" id="legend" style="display:none;">
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#fdecea;border:1px solid #c0392b;"></div>
+            <span>Quá hạn &gt; 30 ngày</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#fff3cd;border:1px solid #f39c12;"></div>
+            <span>Quá hạn 1–30 ngày</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#fff9c4;border:1px solid #f1c40f;"></div>
+            <span>Hết hạn hôm nay</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background:#e8f5e9;border:1px solid #27ae60;"></div>
+            <span>Sắp hết hạn (còn ≤ 30 ngày)</span>
+        </div>
+    </div>
 
-            // ⚠️ QUAN TRỌNG: Đổi tên cột cho đúng với AppSheet của bạn
-            fields: {
-                name:        'Tên hội viên',       // Cột tên
-                phone:       'Điện thoại hội viên', // Cột số điện thoại
-                lastPayment: 'Ngày đóng HP',        // ← ĐỔI tên cột ngày đóng HP cho đúng
-                active:      'Active',              // Cột trạng thái active
-                notes:       'Ghi chú',             // Cột ghi chú (nếu có)
-            }
-        };
-        // ============================================================
+    <!-- Table -->
+    <table id="dataTable" style="display:none;">
+        <thead>
+            <tr>
+                <th style="width:45px;">STT</th>
+                <th>Họ và tên</th>
+                <th>Số điện thoại</th>
+                <th>Ngày đóng HP lần trước</th>
+                <th>Ngày hết hạn</th>
+                <th>Thời gian quá hạn</th>
+                <th>Trạng thái</th>
+                <th style="min-width:130px;">Ghi chú</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
 
-        // Global state
-        let allMembers   = [];  // Toàn bộ hội viên active
-        let displayData  = [];  // Dữ liệu đang hiển thị sau filter
+    <div id="noData" class="no-data" style="display:none;">
+        ✅ Không có hội viên nào quá hạn hoặc sắp hết hạn trong 30 ngày tới!
+    </div>
 
-        // ── Helpers ──────────────────────────────────────────────────
+</div>
 
-        /**
-         * Parse nhiều định dạng ngày phổ biến:
-         * DD/MM/YYYY | YYYY-MM-DD | MM/DD/YYYY | timestamp
-         */
-        function parseDate(value) {
-            if (!value) return null;
-            if (value instanceof Date) return isNaN(value) ? null : value;
+<script>
+// ================================================================
+//  CONFIG
+// ================================================================
+const CONFIG = {
+    appId:     'd9ee17ac-4397-452d-9e74-97997607fa4b',
+    accessKey: 'V2-Rovhm-ZiLxx-msd7k-TSoig-NkECL-5LXEq-Kraws-yE09V',
+    region:    'www',
+    tableName: 'HV_NCC_KH',
 
-            const str = String(value).trim();
+    fields: {
+        name:        'Tên hội viên',
+        phone:       'Điện thoại hội viên',
+        lastPayment: 'Ngày đóng hội phí mới',  // Tên cột chính xác
+        active:      'Active',
+        notes:       'Ghi chú',
+    },
 
-            // DD/MM/YYYY
-            const dmy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-            if (dmy) return new Date(+dmy[3], +dmy[2] - 1, +dmy[1]);
+    cycleDays:   365,  // Chu kỳ hội phí: 365 ngày
+    warningDays: 30    // Cảnh báo trước 30 ngày
+};
+// ================================================================
 
-            // YYYY-MM-DD
-            const ymd = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (ymd) return new Date(+ymd[1], +ymd[2] - 1, +ymd[3]);
+let allActive   = [];
+let displayData = [];
 
-            // Fallback
-            const d = new Date(str);
-            return isNaN(d) ? null : d;
+// ── Helpers ──────────────────────────────────────────────────────
+
+function todayMidnight() {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+function parseDate(value) {
+    if (!value) return null;
+    if (value instanceof Date) return isNaN(value) ? null : value;
+
+    // AppSheet Excel serial number
+    if (typeof value === 'number') {
+        const d = new Date(Math.round((value - 25569) * 86400 * 1000));
+        return isNaN(d) ? null : d;
+    }
+
+    const str = String(value).trim();
+
+    // DD/MM/YYYY
+    const dmy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (dmy) return new Date(+dmy[3], +dmy[2] - 1, +dmy[1]);
+
+    // YYYY-MM-DD
+    const ymd = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymd) return new Date(+ymd[1], +ymd[2] - 1, +ymd[3]);
+
+    const fallback = new Date(str);
+    return isNaN(fallback) ? null : fallback;
+}
+
+function formatDate(date) {
+    if (!date) return '—';
+    return date.toLocaleDateString('vi-VN', {
+        day: '2-digit', month: '2-digit', year: 'numeric'
+    });
+}
+
+function getOverdueText(overdueDays) {
+    if (overdueDays === null)  return '—';
+    if (overdueDays > 0)       return `${overdueDays} ngày`;
+    if (overdueDays === 0)     return 'Hôm nay';
+    return `Còn ${Math.abs(overdueDays)} ngày`;
+}
+
+// ── AppSheet API ──────────────────────────────────────────────────
+
+async function fetchAppSheetData() {
+    const { appId, accessKey, region, tableName } = CONFIG;
+    const res = await fetch(
+        `https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`,
+        {
+            method: 'POST',
+            headers: {
+                'ApplicationAccessKey': accessKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                Action: 'Find',
+                Properties: {},
+                Selector: `Filter(${tableName}, true)`
+            })
         }
+    );
 
-        function formatDate(date) {
-            if (!date) return '—';
-            return date.toLocaleDateString('vi-VN', {
-                day: '2-digit', month: '2-digit', year: 'numeric'
-            });
-        }
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error('Dữ liệu trả về không hợp lệ');
+    return data;
+}
 
-        /** Số ngày chênh lệch: dương = quá hạn, âm = còn hạn */
-        function daysDiff(from, to) {
-            const msPerDay = 1000 * 60 * 60 * 24;
-            return Math.floor((to - from) / msPerDay);
-        }
+// ── Process ───────────────────────────────────────────────────────
 
-        function todayMidnight() {
-            const d = new Date();
-            d.setHours(0, 0, 0, 0);
-            return d;
-        }
+function processMembers(rawData) {
+    const { fields, cycleDays } = CONFIG;
+    const today = todayMidnight();
 
-        // ── AppSheet API ──────────────────────────────────────────────
+    return rawData
+        .filter(item => (item[fields.active] || '').toLowerCase() === 'active')
+        .map(item => {
+            const name        = (item[fields.name]  || '').trim();
+            const phone       = (item[fields.phone] || '').trim();
+            const notes       = (item[fields.notes] || '').trim();
+            const lastPayDate = parseDate(item[fields.lastPayment]);
 
-        async function fetchAppSheetData() {
-            const { appId, accessKey, region, tableName } = CONFIG;
-            const url = `https://${region}.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`;
-
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'ApplicationAccessKey': accessKey,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    Action: 'Find',
-                    Properties: {},
-                    Selector: `Filter(${tableName}, true)`
-                })
-            });
-
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            if (!Array.isArray(data)) throw new Error('Dữ liệu trả về không hợp lệ');
-            return data;
-        }
-
-        // ── Process data ──────────────────────────────────────────────
-
-        function processMembers(rawData) {
-            const { fields } = CONFIG;
-            const cycleMonths = parseInt(document.getElementById('cycleMonths').value) || 12;
-            const today = todayMidnight();
-
-            return rawData
-                .filter(item => {
-                    const active = (item[fields.active] || '').toLowerCase();
-                    return active === 'active';
-                })
-                .map(item => {
-                    const name        = item[fields.name]        || '';
-                    const phone       = item[fields.phone]       || '';
-                    const notesRaw    = item[fields.notes]       || '';
-                    const lastPayDate = parseDate(item[fields.lastPayment]);
-
-                    // Tính ngày hết hạn
-                    let dueDate = null;
-                    if (lastPayDate) {
-                        dueDate = new Date(lastPayDate);
-                        dueDate.setMonth(dueDate.getMonth() + cycleMonths);
-                        dueDate.setHours(0, 0, 0, 0);
-                    }
-
-                    // Số ngày quá hạn (dương = quá hạn, âm = còn hạn)
-                    const overdueDays = dueDate ? daysDiff(dueDate, today) : null;
-
-                    return {
-                        name,
-                        phone,
-                        lastPayDate,
-                        dueDate,
-                        overdueDays,
-                        notes: notesRaw
-                    };
-                })
-                .filter(m => m.name); // bỏ dòng trống
-        }
-
-        // ── Filter & Sort ─────────────────────────────────────────────
-
-        function applyFilter() {
-            if (allMembers.length === 0) return;
-
-            const mode        = document.getElementById('filterMode').value;
-            const warningDays = parseInt(document.getElementById('warningDays').value) || 30;
-
-            let filtered = allMembers.filter(m => {
-                if (m.overdueDays === null) return mode === 'all_members';
-
-                const isOverdue  = m.overdueDays > 0;
-                const isToday    = m.overdueDays === 0;
-                const isUpcoming = m.overdueDays >= -warningDays && m.overdueDays <= 0;
-
-                switch (mode) {
-                    case 'overdue_only':   return isOverdue || isToday;
-                    case 'upcoming_only':  return isUpcoming && !isToday;
-                    case 'all_due':        return isOverdue || isToday || isUpcoming;
-                    case 'all_members':    return true;
-                    default:               return true;
-                }
-            });
-
-            // Sort: quá hạn nhiều nhất lên đầu, sắp tới hạn xuống cuối
-            filtered.sort((a, b) => {
-                const da = a.overdueDays ?? -9999;
-                const db = b.overdueDays ?? -9999;
-                return db - da;
-            });
-
-            displayData = filtered;
-            renderTable(filtered, warningDays);
-            updateStats(warningDays);
-        }
-
-        // ── Render ────────────────────────────────────────────────────
-
-        function getRowClass(overdueDays) {
-            if (overdueDays === null) return '';
-            if (overdueDays > 90)  return 'row-overdue-critical';
-            if (overdueDays > 30)  return 'row-overdue-high';
-            if (overdueDays > 0)   return 'row-overdue-medium';
-            if (overdueDays === 0) return 'row-due-today';
-            return 'row-upcoming';
-        }
-
-        function getBadge(overdueDays, warningDays) {
-            if (overdueDays === null) {
-                return '<span class="badge" style="background:#aaa;color:white;">Chưa có dữ liệu</span>';
-            }
-            if (overdueDays > 90) {
-                return `<span class="badge badge-critical">Quá hạn ${overdueDays} ngày</span>`;
-            }
-            if (overdueDays > 30) {
-                return `<span class="badge badge-high">Quá hạn ${overdueDays} ngày</span>`;
-            }
-            if (overdueDays > 0) {
-                return `<span class="badge badge-medium">Quá hạn ${overdueDays} ngày</span>`;
-            }
-            if (overdueDays === 0) {
-                return `<span class="badge badge-today">Hết hạn hôm nay</span>`;
-            }
-            // Còn hạn
-            const daysLeft = Math.abs(overdueDays);
-            if (daysLeft <= warningDays) {
-                return `<span class="badge badge-upcoming">Còn ${daysLeft} ngày</span>`;
-            }
-            return `<span class="badge" style="background:#27ae60;color:white;">Còn ${daysLeft} ngày</span>`;
-        }
-
-        function getOverdueText(overdueDays) {
-            if (overdueDays === null) return '—';
-            if (overdueDays > 0)  return `${overdueDays} ngày`;
-            if (overdueDays === 0) return 'Hôm nay';
-            return `Còn ${Math.abs(overdueDays)} ngày`;
-        }
-
-        function renderTable(data, warningDays) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-
-            if (data.length === 0) {
-                document.getElementById('dataTable').style.display = 'none';
-                document.getElementById('noData').style.display    = 'block';
-                return;
+            // Ngày hết hạn = ngày đóng HP + 365 ngày
+            let dueDate = null;
+            if (lastPayDate) {
+                dueDate = new Date(lastPayDate.getTime() + cycleDays * 86400000);
+                dueDate.setHours(0, 0, 0, 0);
             }
 
-            document.getElementById('noData').style.display    = 'none';
-            document.getElementById('dataTable').style.display = 'table';
+            // overdueDays > 0: quá hạn | = 0: hôm nay | < 0: còn hạn
+            const overdueDays = dueDate
+                ? Math.floor((today - dueDate) / 86400000)
+                : null;
 
-            data.forEach((item, idx) => {
-                const tr = document.createElement('tr');
-                tr.className = getRowClass(item.overdueDays);
+            return { name, phone, notes, lastPayDate, dueDate, overdueDays };
+        })
+        .filter(m => m.name);
+}
 
-                tr.innerHTML = `
-                    <td>${idx + 1}</td>
-                    <td class="name-cell">${item.name}</td>
-                    <td>${item.phone || '—'}</td>
-                    <td>${formatDate(item.lastPayDate)}</td>
-                    <td>${formatDate(item.dueDate)}</td>
-                    <td>${getOverdueText(item.overdueDays)}</td>
-                    <td>${getBadge(item.overdueDays, warningDays)}</td>
-                    <td class="notes-cell">${item.notes}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+// ── Filter ────────────────────────────────────────────────────────
+
+function applyFilter() {
+    if (allActive.length === 0) return;
+
+    const mode         = document.getElementById('filterMode').value;
+    const warningDays  = CONFIG.warningDays; // cố định 30 ngày
+
+    let filtered = allActive.filter(m => {
+        if (m.overdueDays === null) return mode === 'all_active';
+
+        switch (mode) {
+            case 'default':
+                // Quá hạn (bất kể bao lâu) HOẶC còn ≤ 30 ngày
+                return m.overdueDays >= -warningDays;
+
+            case 'overdue_only':
+                // Chỉ quá hạn (kể cả hôm nay)
+                return m.overdueDays >= 0;
+
+            case 'upcoming_only':
+                // Chỉ sắp hết hạn: còn 1–30 ngày (chưa hết hạn)
+                return m.overdueDays < 0 && m.overdueDays >= -warningDays;
+
+            case 'all_active':
+                return true;
+
+            default:
+                return m.overdueDays >= -warningDays;
         }
+    });
 
-        function updateStats(warningDays) {
-            const total    = allMembers.length;
-            const overdue  = allMembers.filter(m => m.overdueDays !== null && m.overdueDays > 0).length;
-            const warning  = allMembers.filter(m => m.overdueDays !== null && m.overdueDays >= -warningDays && m.overdueDays <= 0).length;
-            const upToDate = total - overdue - warning;
+    // Sắp xếp: quá hạn nhiều nhất lên đầu → hôm nay → sắp tới hạn
+    filtered.sort((a, b) => {
+        const da = a.overdueDays ?? -9999;
+        const db = b.overdueDays ?? -9999;
+        return db - da;
+    });
 
-            document.getElementById('statTotal').textContent    = total;
-            document.getElementById('statOverdue').textContent  = overdue;
-            document.getElementById('statWarning').textContent  = warning;
-            document.getElementById('statUpToDate').textContent = Math.max(0, upToDate);
+    displayData = filtered;
+    renderTable(filtered);
+    updateStats();
+}
 
-            document.getElementById('statsGrid').style.display = 'flex';
-            document.getElementById('legend').style.display    = 'flex';
-        }
+// ── Render ────────────────────────────────────────────────────────
 
-        // ── Export Excel ──────────────────────────────────────────────
+function getRowClass(overdueDays) {
+    if (overdueDays === null)  return '';
+    if (overdueDays > 30)      return 'row-overdue-critical';
+    if (overdueDays > 0)       return 'row-overdue-normal';
+    if (overdueDays === 0)     return 'row-due-today';
+    return 'row-upcoming';
+}
 
-        function exportToExcel() {
-            if (displayData.length === 0) {
-                alert('Không có dữ liệu để xuất!');
-                return;
-            }
+function getBadge(overdueDays) {
+    if (overdueDays === null)
+        return '<span class="badge badge-unknown">Chưa có dữ liệu</span>';
+    if (overdueDays > 30)
+        return `<span class="badge badge-critical">Quá hạn ${overdueDays} ngày</span>`;
+    if (overdueDays > 0)
+        return `<span class="badge badge-medium">Quá hạn ${overdueDays} ngày</span>`;
+    if (overdueDays === 0)
+        return `<span class="badge badge-today">Hết hạn hôm nay</span>`;
+    return `<span class="badge badge-upcoming">Còn ${Math.abs(overdueDays)} ngày</span>`;
+}
 
-            const warningDays = parseInt(document.getElementById('warningDays').value) || 30;
+function renderTable(data) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
 
-            const headers = [
-                'STT', 'Họ và tên', 'Số điện thoại',
-                'Ngày đóng HP lần trước', 'Ngày hết hạn',
-                'Thời gian quá hạn', 'Trạng thái', 'Ghi chú'
-            ];
+    if (data.length === 0) {
+        document.getElementById('dataTable').style.display = 'none';
+        document.getElementById('noData').style.display    = 'block';
+        return;
+    }
 
-            const rows = displayData.map((item, idx) => [
-                idx + 1,
-                item.name,
-                item.phone || '',
-                formatDate(item.lastPayDate),
-                formatDate(item.dueDate),
-                getOverdueText(item.overdueDays),
-                item.overdueDays === null ? 'Chưa có dữ liệu'
-                    : item.overdueDays > 0  ? `Quá hạn ${item.overdueDays} ngày`
-                    : item.overdueDays === 0 ? 'Hết hạn hôm nay'
-                    : `Còn ${Math.abs(item.overdueDays)} ngày`,
-                item.notes || ''
-            ]);
+    document.getElementById('noData').style.display    = 'none';
+    document.getElementById('dataTable').style.display = 'table';
 
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-            ws['!cols'] = [
-                { width: 6 }, { width: 28 }, { width: 16 },
-                { width: 22 }, { width: 16 }, { width: 20 },
-                { width: 22 }, { width: 20 }
-            ];
+    data.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = getRowClass(item.overdueDays);
+        tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td class="name-cell">${item.name}</td>
+            <td>${item.phone || '—'}</td>
+            <td>${formatDate(item.lastPayDate)}</td>
+            <td>${formatDate(item.dueDate)}</td>
+            <td><strong>${getOverdueText(item.overdueDays)}</strong></td>
+            <td>${getBadge(item.overdueDays)}</td>
+            <td>
+                <input class="notes-input" type="text"
+                       placeholder="Nhập ghi chú..."
+                       value="${item.notes}"
+                       onchange="displayData[${idx}].notes = this.value">
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
 
-            XLSX.utils.book_append_sheet(wb, ws, 'Hội Phí');
+function updateStats() {
+    const overdue  = displayData.filter(m => m.overdueDays !== null && m.overdueDays > 0).length;
+    const todayDue = displayData.filter(m => m.overdueDays === 0).length;
+    const upcoming = displayData.filter(m => m.overdueDays !== null && m.overdueDays < 0).length;
+    const showing  = displayData.length;
 
-            const dateStr = new Date().toISOString().split('T')[0];
-            XLSX.writeFile(wb, `Danh_Sach_Hoi_Phi_${dateStr}.xlsx`);
-        }
+    document.getElementById('statOverdue').textContent  = overdue;
+    document.getElementById('statToday').textContent    = todayDue;
+    document.getElementById('statUpcoming').textContent = upcoming;
+    document.getElementById('statShowing').textContent  = showing;
 
-        // ── Print ─────────────────────────────────────────────────────
+    document.getElementById('statsGrid').style.display = 'flex';
+    document.getElementById('legend').style.display    = 'flex';
+}
 
-        function printTable() {
-            if (displayData.length === 0) {
-                alert('Không có dữ liệu để in!');
-                return;
-            }
-            window.print();
-        }
+// ── Export Excel ──────────────────────────────────────────────────
 
-        // ── Main load ─────────────────────────────────────────────────
+function exportToExcel() {
+    if (displayData.length === 0) {
+        alert('Không có dữ liệu để xuất!');
+        return;
+    }
 
-        async function loadData() {
-            document.getElementById('loading').style.display    = 'block';
-            document.getElementById('error').style.display      = 'none';
-            document.getElementById('dataTable').style.display  = 'none';
-            document.getElementById('noData').style.display     = 'none';
-            document.getElementById('statsGrid').style.display  = 'none';
-            document.getElementById('legend').style.display     = 'none';
+    const headers = [
+        'STT', 'Họ và tên', 'Số điện thoại',
+        'Ngày đóng HP lần trước', 'Ngày hết hạn',
+        'Thời gian quá hạn', 'Trạng thái', 'Ghi chú'
+    ];
 
-            try {
-                const raw  = await fetchAppSheetData();
-                allMembers = processMembers(raw);
-                applyFilter();
-                document.getElementById('loading').style.display = 'none';
-            } catch (err) {
-                document.getElementById('loading').style.display = 'none';
-                const errEl = document.getElementById('error');
-                errEl.textContent = `❌ Lỗi khi tải dữ liệu: ${err.message}`;
-                errEl.style.display = 'block';
-                console.error(err);
-            }
-        }
+    const rows = displayData.map((item, idx) => [
+        idx + 1,
+        item.name,
+        item.phone || '',
+        formatDate(item.lastPayDate),
+        formatDate(item.dueDate),
+        getOverdueText(item.overdueDays),
+        item.overdueDays === null     ? 'Chưa có dữ liệu'
+            : item.overdueDays > 0   ? `Quá hạn ${item.overdueDays} ngày`
+            : item.overdueDays === 0 ? 'Hết hạn hôm nay'
+            : `Còn ${Math.abs(item.overdueDays)} ngày`,
+        item.notes || ''
+    ]);
 
-        // ── Init ──────────────────────────────────────────────────────
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = [
+        {width:6},  {width:28}, {width:16},
+        {width:22}, {width:16}, {width:20},
+        {width:22}, {width:22}
+    ];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const now = new Date();
-            document.getElementById('currentDate').textContent =
-                `Cập nhật lúc: ${now.toLocaleString('vi-VN')}`;
-            loadData();
-        });
-    </script>
+    XLSX.utils.book_append_sheet(wb, ws, 'Hội Phí');
+    const dateStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Danh_Sach_Hoi_Phi_${dateStr}.xlsx`);
+}
+
+// ── Print ─────────────────────────────────────────────────────────
+
+function printTable() {
+    if (displayData.length === 0) {
+        alert('Không có dữ liệu để in!');
+        return;
+    }
+    window.print();
+}
+
+// ── Main ──────────────────────────────────────────────────────────
+
+async function loadData() {
+    document.getElementById('loading').style.display   = 'block';
+    document.getElementById('error').style.display     = 'none';
+    document.getElementById('dataTable').style.display = 'none';
+    document.getElementById('noData').style.display    = 'none';
+    document.getElementById('statsGrid').style.display = 'none';
+    document.getElementById('legend').style.display    = 'none';
+
+    try {
+        const raw  = await fetchAppSheetData();
+        allActive  = processMembers(raw);
+        applyFilter();
+        document.getElementById('loading').style.display = 'none';
+    } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        const errEl = document.getElementById('error');
+        errEl.textContent = `❌ Lỗi khi tải dữ liệu: ${err.message}`;
+        errEl.style.display = 'block';
+        console.error(err);
+    }
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    document.getElementById('currentDate').textContent =
+        `Cập nhật lúc: ${now.toLocaleString('vi-VN')}`;
+    loadData();
+});
+</script>
 </body>
 </html>
