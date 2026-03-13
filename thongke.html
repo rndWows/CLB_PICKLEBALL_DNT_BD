@@ -810,25 +810,29 @@
         }
 
         function processGrowthData(data) {
-            function getLast12Months() {
-                const months = [];
-                const today = new Date();
-                for (let i = 0; i < 12; i++) {
-                    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-                    months.unshift(`${d.getMonth() + 1}/${d.getFullYear()}`);
-                }
-                return months;
-            }
-
-            const last12Months = getLast12Months();
             const filteredData = filterDataByDateRange(data, currentFromMonth, currentToMonth, "Ngày tham gia hội");
 
+            // Lấy tất cả tháng từ dữ liệu thực tế thay vì cứng 12 tháng
             const activeMembers = filteredData.filter(member => member.Active === "active");
-            const monthlyData = last12Months.reduce((acc, month) => {
+
+            const monthSet = new Set(activeMembers.map(m => {
+                const d = new Date(m["Ngày tham gia hội"]);
+                return `${d.getMonth() + 1}/${d.getFullYear()}`;
+            }));
+
+            const allMonths = [...monthSet].sort((a, b) => {
+                const [ma, ya] = a.split('/').map(Number);
+                const [mb, yb] = b.split('/').map(Number);
+                return new Date(ya, ma - 1) - new Date(yb, mb - 1);
+            });
+
+            // Khởi tạo dữ liệu cho tất cả các tháng
+            const monthlyData = allMonths.reduce((acc, month) => {
                 acc[month] = 0;
                 return acc;
             }, {});
 
+            // Đếm số hội viên mới theo từng tháng
             activeMembers.forEach(member => {
                 const date = new Date(member["Ngày tham gia hội"]);
                 const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
@@ -837,6 +841,7 @@
                 }
             });
 
+            // Tính tổng tích lũy
             let cumulative = 0;
             const cumulativeData = Object.entries(monthlyData).map(([month, count]) => {
                 cumulative += count;
