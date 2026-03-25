@@ -242,22 +242,17 @@
             background-color: #fdecea !important;
         }
 
-        /* quá hạn > 30 ngày  */
         .row-overdue-normal {
             background-color: #fff3cd !important;
         }
 
-        /* quá hạn 1–30 ngày  */
         .row-due-today {
             background-color: #fff9c4 !important;
         }
 
-        /* hôm nay             */
         .row-upcoming {
             background-color: #e8f5e9 !important;
         }
-
-        /* còn ≤ 30 ngày       */
 
         /* Badge */
         .badge {
@@ -513,13 +508,14 @@
             fields: {
                 name: 'Tên hội viên',
                 phone: 'Điện thoại hội viên',
-                lastPayment: 'Ngày đóng hội phí mới',  // Tên cột chính xác
+                lastPayment: 'Ngày đóng hội phí',   // ✅ Đã sửa
+                dueDate: 'Hạn đóng phí',             // ✅ Thêm mới — đọc thẳng từ AppSheet
                 active: 'Active',
                 notes: 'Ghi chú',
             },
 
-            cycleDays: 365,  // Chu kỳ hội phí: 365 ngày
-            warningDays: 30    // Cảnh báo trước 30 ngày
+            cycleDays: 365,
+            warningDays: 30
         };
         // ================================================================
 
@@ -538,7 +534,6 @@
             if (!value) return null;
             if (value instanceof Date) return isNaN(value) ? null : value;
 
-            // AppSheet Excel serial number
             if (typeof value === 'number') {
                 const d = new Date(Math.round((value - 25569) * 86400 * 1000));
                 d.setHours(0, 0, 0, 0);
@@ -547,11 +542,9 @@
 
             const str = String(value).trim();
 
-            // ✅ ISO format: 2025-03-01 hoặc 2025-03-01T00:00:00
             const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
             if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3]);
 
-            // ✅ AppSheet trả về MM/DD/YYYY (ví dụ: 01/3/2025 = tháng 1, ngày 3)
             const mdy = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
             if (mdy) return new Date(+mdy[3], +mdy[1] - 1, +mdy[2]);
 
@@ -599,17 +592,17 @@
             if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             const data = await res.json();
 
-            // DEBUG tạm thời — xem F12 Console
             console.log('📦 Tổng bản ghi API trả về:', data.length);
             const activeCount = data.filter(r => (r['Active'] || '').toLowerCase() === 'active').length;
-            const hasDateCount = data.filter(r => r['Ngày đóng hội phí mới']).length;
+            const hasDateCount = data.filter(r => r['Ngày đóng hội phí']).length;
+            const hasDueDateCount = data.filter(r => r['Hạn đóng phí']).length;
             console.log('👥 Có Active=active:', activeCount);
-            console.log('📅 Có Ngày đóng HP mới:', hasDateCount);
+            console.log('📅 Có Ngày đóng hội phí:', hasDateCount);
+            console.log('📅 Có Hạn đóng phí:', hasDueDateCount);
 
             if (!Array.isArray(data)) throw new Error('Dữ liệu không hợp lệ');
             return data;
         }
-
 
         // ── Process ───────────────────────────────────────────────────────
 
@@ -620,19 +613,19 @@
             return rawData
                 .filter(item => (item[fields.active] || '').toLowerCase() === 'active')
                 .map(item => {
-                    const name = (item[fields.name] || '').trim();
-                    const phone = (item[fields.phone] || '').trim();
-                    const notes = (item[fields.notes] || '').trim();
+                    const name        = (item[fields.name]  || '').trim();
+                    const phone       = (item[fields.phone] || '').trim();
+                    const notes       = (item[fields.notes] || '').trim();
                     const lastPayDate = parseDate(item[fields.lastPayment]);
 
-                    // Ngày hết hạn = ngày đóng HP + 365 ngày
-                    let dueDate = null;
-                    if (lastPayDate) {
+                    // ✅ Ưu tiên đọc "Hạn đóng phí" từ AppSheet
+                    //    Nếu không có thì tự tính = lastPayDate + 365 ngày
+                    let dueDate = parseDate(item[fields.dueDate]);
+                    if (!dueDate && lastPayDate) {
                         dueDate = new Date(lastPayDate.getTime() + cycleDays * 86400000);
                         dueDate.setHours(0, 0, 0, 0);
                     }
 
-                    // overdueDays > 0: quá hạn | = 0: hôm nay | < 0: còn hạn
                     const overdueDays = dueDate
                         ? Math.floor((today - dueDate) / 86400000)
                         : null;
@@ -648,33 +641,25 @@
             if (allActive.length === 0) return;
 
             const mode = document.getElementById('filterMode').value;
-            const warningDays = CONFIG.warningDays; // cố định 30 ngày
+            const warningDays = CONFIG.warningDays;
 
             let filtered = allActive.filter(m => {
                 if (m.overdueDays === null) return mode === 'all_active';
 
                 switch (mode) {
                     case 'default':
-                        // Quá hạn (bất kể bao lâu) HOẶC còn ≤ 30 ngày
                         return m.overdueDays >= -warningDays;
-
                     case 'overdue_only':
-                        // Chỉ quá hạn (kể cả hôm nay)
                         return m.overdueDays >= 0;
-
                     case 'upcoming_only':
-                        // Chỉ sắp hết hạn: còn 1–30 ngày (chưa hết hạn)
                         return m.overdueDays < 0 && m.overdueDays >= -warningDays;
-
                     case 'all_active':
                         return true;
-
                     default:
                         return m.overdueDays >= -warningDays;
                 }
             });
 
-            // Sắp xếp: quá hạn nhiều nhất lên đầu → hôm nay → sắp tới hạn
             filtered.sort((a, b) => {
                 const da = a.overdueDays ?? -9999;
                 const db = b.overdueDays ?? -9999;
@@ -690,8 +675,8 @@
 
         function getRowClass(overdueDays) {
             if (overdueDays === null) return '';
-            if (overdueDays > 30) return 'row-overdue-critical';
-            if (overdueDays > 0) return 'row-overdue-normal';
+            if (overdueDays > 30)  return 'row-overdue-critical';
+            if (overdueDays > 0)   return 'row-overdue-normal';
             if (overdueDays === 0) return 'row-due-today';
             return 'row-upcoming';
         }
@@ -725,37 +710,37 @@
                 const tr = document.createElement('tr');
                 tr.className = getRowClass(item.overdueDays);
                 tr.innerHTML = `
-            <td>${idx + 1}</td>
-            <td class="name-cell">${item.name}</td>
-            <td>${item.phone || '—'}</td>
-            <td>${formatDate(item.lastPayDate)}</td>
-            <td>${formatDate(item.dueDate)}</td>
-            <td><strong>${getOverdueText(item.overdueDays)}</strong></td>
-            <td>${getBadge(item.overdueDays)}</td>
-            <td>
-                <input class="notes-input" type="text"
-                       placeholder="Nhập ghi chú..."
-                       value="${item.notes}"
-                       onchange="displayData[${idx}].notes = this.value">
-            </td>
-        `;
+                    <td>${idx + 1}</td>
+                    <td class="name-cell">${item.name}</td>
+                    <td>${item.phone || '—'}</td>
+                    <td>${formatDate(item.lastPayDate)}</td>
+                    <td>${formatDate(item.dueDate)}</td>
+                    <td><strong>${getOverdueText(item.overdueDays)}</strong></td>
+                    <td>${getBadge(item.overdueDays)}</td>
+                    <td>
+                        <input class="notes-input" type="text"
+                               placeholder="Nhập ghi chú..."
+                               value="${item.notes}"
+                               onchange="displayData[${idx}].notes = this.value">
+                    </td>
+                `;
                 tbody.appendChild(tr);
             });
         }
 
         function updateStats() {
-            const overdue = displayData.filter(m => m.overdueDays !== null && m.overdueDays > 0).length;
+            const overdue  = displayData.filter(m => m.overdueDays !== null && m.overdueDays > 0).length;
             const todayDue = displayData.filter(m => m.overdueDays === 0).length;
             const upcoming = displayData.filter(m => m.overdueDays !== null && m.overdueDays < 0).length;
-            const showing = displayData.length;
+            const showing  = displayData.length;
 
-            document.getElementById('statOverdue').textContent = overdue;
-            document.getElementById('statToday').textContent = todayDue;
+            document.getElementById('statOverdue').textContent  = overdue;
+            document.getElementById('statToday').textContent    = todayDue;
             document.getElementById('statUpcoming').textContent = upcoming;
-            document.getElementById('statShowing').textContent = showing;
+            document.getElementById('statShowing').textContent  = showing;
 
             document.getElementById('statsGrid').style.display = 'flex';
-            document.getElementById('legend').style.display = 'flex';
+            document.getElementById('legend').style.display    = 'flex';
         }
 
         // ── Export Excel ──────────────────────────────────────────────────
@@ -780,9 +765,9 @@
                 formatDate(item.dueDate),
                 getOverdueText(item.overdueDays),
                 item.overdueDays === null ? 'Chưa có dữ liệu'
-                    : item.overdueDays > 0 ? `Quá hạn ${item.overdueDays} ngày`
-                        : item.overdueDays === 0 ? 'Hết hạn hôm nay'
-                            : `Còn ${Math.abs(item.overdueDays)} ngày`,
+                    : item.overdueDays > 0  ? `Quá hạn ${item.overdueDays} ngày`
+                    : item.overdueDays === 0 ? 'Hết hạn hôm nay'
+                    : `Còn ${Math.abs(item.overdueDays)} ngày`,
                 item.notes || ''
             ]);
 
@@ -812,12 +797,12 @@
         // ── Main ──────────────────────────────────────────────────────────
 
         async function loadData() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('error').style.display = 'none';
+            document.getElementById('loading').style.display  = 'block';
+            document.getElementById('error').style.display    = 'none';
             document.getElementById('dataTable').style.display = 'none';
-            document.getElementById('noData').style.display = 'none';
+            document.getElementById('noData').style.display   = 'none';
             document.getElementById('statsGrid').style.display = 'none';
-            document.getElementById('legend').style.display = 'none';
+            document.getElementById('legend').style.display   = 'none';
 
             try {
                 const raw = await fetchAppSheetData();
