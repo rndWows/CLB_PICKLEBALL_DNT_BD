@@ -358,12 +358,11 @@
                     required>
             </div>
 
-            <!-- Logo công ty -->
+            <!-- Logo công ty (KHÔNG BẮT BUỘC) -->
             <div class="relative">
-                <label for="filelogo" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Logo công ty</label>
+                <label for="filelogo" class="block text-sm font-semibold text-gray-700 mb-2">Logo công ty</label>
                 <input type="file" id="filelogo" name="filelogo" accept="image/*"
-                    class="custom-file-input mt-1 block w-full text-sm text-gray-500"
-                    required>
+                    class="custom-file-input mt-1 block w-full text-sm text-gray-500">
                 <div id="logoPreview" class="mt-4 text-center">
                     <!-- Khu vực để hiển thị xem trước ảnh -->
                 </div>
@@ -548,14 +547,9 @@
                     }
                 });
 
-                // Hình hội viên: KHÔNG bắt buộc (chỉ khai báo để dùng bên dưới)
+                // Hình hội viên & Logo công ty: KHÔNG bắt buộc (chỉ khai báo để dùng bên dưới)
                 const fileInput = document.getElementById('fileHS');
-
-                // Kiểm tra file logo
                 const fileInputLogo = document.getElementById('filelogo');
-                if (fileInputLogo.files.length === 0) {
-                    missingFields.push('Logo công ty');
-                }
 
                 // Kiểm tra size áo
                 const sizeAo = document.getElementById('sizeAo').value;
@@ -592,11 +586,10 @@
                     filebase = await readFile(file);
                 }
 
-                // Đọc logo công ty
-                const fileInput1 = document.getElementById('filelogo');
+                // Đọc logo công ty (nếu có)
                 let logoBase64 = "";
-                if (fileInput1.files.length > 0) {
-                    const file = fileInput1.files[0];
+                if (fileInputLogo.files.length > 0) {
+                    const file = fileInputLogo.files[0];
                     logoBase64 = await readFile(file);
                 }
 
@@ -614,7 +607,7 @@
                     "Chức vụ (Cty)": data.chucVu,
                     "SP/DV_chu_dao": data.spChudao,
                     "Hình hội viên": filebase, // Không bắt buộc - rỗng nếu không chọn ảnh
-                    "Logo": logoBase64
+                    "Logo": logoBase64 // Không bắt buộc - rỗng nếu không chọn ảnh
                 };
 
                 console.log(formDataToSend);
