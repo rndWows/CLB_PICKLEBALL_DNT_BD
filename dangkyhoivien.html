@@ -330,6 +330,28 @@
                 </select>
             </div>
 
+            <!-- Size giày/dép (MỚI) -->
+            <div class="relative">
+                <i data-lucide="footprints" class="input-icon"></i>
+                <label for="sizeGiay" class="block text-sm font-semibold text-gray-700 mb-2 required-field">Size giày/dép</label>
+                <select id="sizeGiay" name="sizeGiay"
+                    class="input-with-icon mt-1 block w-full shadow-sm h-12 py-2"
+                    required>
+                    <option value="">Chọn size giày/dép</option>
+                    <option value="35">35</option>
+                    <option value="36">36</option>
+                    <option value="37">37</option>
+                    <option value="38">38</option>
+                    <option value="39">39</option>
+                    <option value="40">40</option>
+                    <option value="41">41</option>
+                    <option value="42">42</option>
+                    <option value="43">43</option>
+                    <option value="44">44</option>
+                    <option value="45">45</option>
+                </select>
+            </div>
+
             <!-- Hội viên DNT HCM -->
             <div class="relative">
                 <label class="block text-sm font-semibold text-gray-700 mb-2 required-field">
@@ -533,6 +555,7 @@
                     { id: 'ngaySinh', name: 'Ngày sinh' },
                     { id: 'gioiTinh', name: 'Giới tính' },
                     { id: 'diaChi', name: 'Nơi ở hiện tại' },
+                    { id: 'sizeGiay', name: 'Size giày/dép' },
                     { id: 'congTy', name: 'Công ty' },
                     { id: 'chucVu', name: 'Chức vụ' },
                     { id: 'spChudao', name: 'Sản phẩm/dịch vụ kinh doanh' }
@@ -602,6 +625,7 @@
                     "Nơi ở hiện tại": data.diaChi,
                     "Trình PKB": data.trinhPKB || "", // Không bắt buộc
                     "Size áo": data.sizeAo,
+                    "Size giày/dép": data.sizeGiay, // MỚI
                     "Là hội viên": data.laHoiVien,
                     "Công ty": data.congTy,
                     "Chức vụ (Cty)": data.chucVu,

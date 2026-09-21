@@ -73,7 +73,7 @@
         .checkbox-container {
             display: inline-flex;
             align-items: center;
-            margin: 0 10px;
+            margin: 5px 10px;
             padding: 8px 15px;
             background-color: #f8f9fa;
             border-radius: 4px;
@@ -184,6 +184,15 @@
             display: none;
         }
 
+        /* Cột Size giày/dép (MỚI) */
+        .shoe-column {
+            transition: all 0.3s ease;
+        }
+
+        .shoe-column.hidden {
+            display: none;
+        }
+
         @media print {
 
             .controls,
@@ -227,6 +236,11 @@
                     <input type="checkbox" id="showSizeCheckbox" checked onchange="toggleSizeColumn()">
                     <label for="showSizeCheckbox">👕 Hiển thị size áo</label>
                 </div>
+                <!-- Checkbox Size giày/dép (MỚI) -->
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showShoeCheckbox" checked onchange="toggleShoeColumn()">
+                    <label for="showShoeCheckbox">👟 Hiển thị size giày/dép</label>
+                </div>
             </div>
         </div>
 
@@ -248,6 +262,7 @@
                     <th>Tên hội viên</th>
                     <th class="phone-column">Điện thoại hội viên</th>
                     <th class="size-column">Size áo</th>
+                    <th class="shoe-column">Size giày/dép</th>
                     <th>Giới tính</th>
                     <th>Trình PKB</th>
                     <th>Ghi chú</th>
@@ -269,6 +284,7 @@
         let currentData = [];
         let showPhoneColumn = true;
         let showSizeColumn = true;
+        let showShoeColumn = true;
 
         // Function to toggle phone column visibility
         function togglePhoneColumn() {
@@ -293,6 +309,21 @@
             const sizeColumns = document.querySelectorAll('.size-column');
             sizeColumns.forEach(column => {
                 if (showSizeColumn) {
+                    column.classList.remove('hidden');
+                } else {
+                    column.classList.add('hidden');
+                }
+            });
+        }
+
+        // Function to toggle shoe size column visibility (MỚI)
+        function toggleShoeColumn() {
+            const checkbox = document.getElementById('showShoeCheckbox');
+            showShoeColumn = checkbox.checked;
+            
+            const shoeColumns = document.querySelectorAll('.shoe-column');
+            shoeColumns.forEach(column => {
+                if (showShoeColumn) {
                     column.classList.remove('hidden');
                 } else {
                     column.classList.add('hidden');
@@ -342,6 +373,7 @@
                 level: parseFloat(item['Trình PKB']) || 0,
                 phone: item['Điện thoại hội viên'] || '',
                 size: item['Size áo'] || '',
+                shoeSize: item['Size giày/dép'] || '',
                 notes: item['Ghi chú'] || '',
                 active: item['Active'] || ''
             })).filter(item => 
@@ -382,7 +414,7 @@
                 const maleHeaderRow = document.createElement('tr');
                 maleHeaderRow.className = 'section-header';
                 maleHeaderRow.innerHTML = `
-                    <td colspan="7"><strong>HẠNG MỤC NAM (${maleData.length} người)</strong></td>
+                    <td colspan="8"><strong>HẠNG MỤC NAM (${maleData.length} người)</strong></td>
                 `;
                 tableBody.appendChild(maleHeaderRow);
 
@@ -394,6 +426,7 @@
                         <td>${item.name}</td>
                         <td class="phone-column">${item.phone}</td>
                         <td class="size-column">${item.size}</td>
+                        <td class="shoe-column">${item.shoeSize}</td>
                         <td class="male-gender">NAM</td>
                         <td>${item.level}</td>
                         <td class="notes-cell"></td>
@@ -409,7 +442,7 @@
                 const femaleHeaderRow = document.createElement('tr');
                 femaleHeaderRow.className = 'section-header';
                 femaleHeaderRow.innerHTML = `
-                    <td colspan="7"><strong>HẠNG MỤC NỮ (${femaleData.length} người)</strong></td>
+                    <td colspan="8"><strong>HẠNG MỤC NỮ (${femaleData.length} người)</strong></td>
                 `;
                 tableBody.appendChild(femaleHeaderRow);
 
@@ -422,6 +455,7 @@
                         <td>${item.name}</td>
                         <td class="phone-column">${item.phone}</td>
                         <td class="size-column">${item.size}</td>
+                        <td class="shoe-column">${item.shoeSize}</td>
                         <td class="female-gender">NỮ</td>
                         <td>${item.level}</td>
                         <td class="notes-cell"></td>
@@ -435,9 +469,10 @@
             // Store current data globally
             currentData = allData;
 
-            // Apply phone and size column visibility
+            // Apply phone, size and shoe column visibility
             togglePhoneColumn();
             toggleSizeColumn();
+            toggleShoeColumn();
 
             return { total: allData.length, male: maleData.length, female: femaleData.length };
         }
@@ -484,10 +519,11 @@
             // Prepare data for Excel
             const excelData = [];
 
-            // Add headers - conditionally include phone and size columns
+            // Add headers - conditionally include phone, size and shoe columns
             const headers = ['STT', 'Tên hội viên'];
             if (showPhoneColumn) headers.push('Điện thoại hội viên');
             if (showSizeColumn) headers.push('Size áo');
+            if (showShoeColumn) headers.push('Size giày/dép');
             headers.push('Giới tính', 'Trình PKB', 'Ghi chú');
             excelData.push(headers);
 
@@ -505,6 +541,7 @@
                     const row = [sttMale++, item.name];
                     if (showPhoneColumn) row.push(item.phone);
                     if (showSizeColumn) row.push(item.size);
+                    if (showShoeColumn) row.push(item.shoeSize);
                     row.push('NAM', item.level, '');
                     excelData.push(row);
                 });
@@ -523,6 +560,7 @@
                     const row = [sttFemale++, item.name];
                     if (showPhoneColumn) row.push(item.phone);
                     if (showSizeColumn) row.push(item.size);
+                    if (showShoeColumn) row.push(item.shoeSize);
                     row.push('NỮ', item.level, '');
                     excelData.push(row);
                 });
@@ -536,6 +574,7 @@
             const colWidths = [{ width: 10 }, { width: 25 }]; // STT, Tên hội viên
             if (showPhoneColumn) colWidths.push({ width: 15 }); // Điện thoại hội viên
             if (showSizeColumn) colWidths.push({ width: 10 }); // Size áo
+            if (showShoeColumn) colWidths.push({ width: 14 }); // Size giày/dép
             colWidths.push({ width: 12 }, { width: 12 }, { width: 15 }); // Giới tính, Trình PKB, Ghi chú
             
             ws['!cols'] = colWidths;
